@@ -174,6 +174,17 @@
 .bartender-card.on { border-left: 6px solid var(--amber); }
 .bartender-card.off { opacity: 0.92; }
 
+.regular-card { display: flex; align-items: center; gap: 0.75rem; }
+.regular-card .rc-text { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.rc-name { font-size: 1.2rem; }
+.rc-usual { color: var(--amber-hi); overflow-wrap: anywhere; }
+.grow { flex: 1; min-width: 0; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; margin: 0; }
+.facts dt { color: var(--muted); font-weight: 700; }
+.facts dd { margin: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
+.bday-row { display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem; }
+.birthdays .bd-line { display: flex; align-items: center; gap: 0.6rem; margin: 0.35rem 0; color: var(--text); text-decoration: none; font-size: 1.1rem; }
+
 .profile-head { text-align: center; }
 .profile-head h1 { margin-top: 0.75rem; }
 
@@ -267,6 +278,8 @@ fieldset.card > legend + * { clear: both; }
 .msg-actions { display: flex; gap: 0.25rem; justify-content: flex-end; flex-wrap: wrap; }
 .msg textarea { min-height: 5rem; }
 .thread-name { margin: 0; font-size: 1.15rem; }
-.who-reacted li { padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 1.1rem; }
+.who-reacted li { padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+.who-name { font-weight: 700; color: var(--text); }
+.thread-head { display: flex; align-items: center; gap: 0.6rem; color: var(--text); text-decoration: none; }
 .who-emoji { display: inline-block; width: 2rem; }
 .post-vis { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }

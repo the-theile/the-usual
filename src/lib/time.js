@@ -84,3 +84,36 @@ export function localTimezone() {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles'; }
   catch { return 'America/Los_Angeles'; }
 }
+
+// ===== Birthdays (month + day, no year) =====
+
+export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'];
+
+export function daysInMonth(m) {
+  return m === 2 ? 29 : [4, 6, 9, 11].includes(m) ? 30 : 31;
+}
+
+/** 3, 14 → 'March 14'; null → '' */
+export function fmtBirthday(m, d) {
+  return m && d ? `${MONTHS[m - 1]} ${d}` : '';
+}
+
+/**
+ * People whose birthday falls within `days` days from `today` ('YYYY-MM-DD').
+ * Feb 29 birthdays show on Feb 28 in non-leap years.
+ * @returns {{ person: object, ymd: string }[]} soonest first
+ */
+export function upcomingBirthdays(people, today, days = 7) {
+  const out = [];
+  for (let k = 0; k < days; k++) {
+    const ymd = addDays(today, k);
+    const [y, m, d] = ymd.split('-').map(Number);
+    const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    for (const p of people) {
+      if (p.birthday_month !== m) continue;
+      if (p.birthday_day === d || (!leap && m === 2 && d === 28 && p.birthday_day === 29)) out.push({ person: p, ymd });
+    }
+  }
+  return out;
+}
