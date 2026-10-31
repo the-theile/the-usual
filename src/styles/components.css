@@ -269,3 +269,4 @@ fieldset.card > legend + * { clear: both; }
 .thread-name { margin: 0; font-size: 1.15rem; }
 .who-reacted li { padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 1.1rem; }
 .who-emoji { display: inline-block; width: 2rem; }
+.post-vis { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }

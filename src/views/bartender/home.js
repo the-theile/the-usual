@@ -13,7 +13,7 @@ export async function bartenderHomeView() {
 
   const [tonightRes, postsRes, barsRes] = await Promise.all([
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: today }),
-    supabase.from('posts').select('id, body, photo_path, created_at').eq('bartender_id', b.id)
+    supabase.from('posts').select('id, body, photo_path, created_at, visibility').eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(10),
     supabase.from('bars').select('id').eq('bartender_id', b.id).limit(1),
   ]);
@@ -76,6 +76,7 @@ function ownPost(p, url, activity) {
     url ? h('img', { class: 'post-photo', src: url, alt: 'Photo for this update', loading: 'lazy' }) : null,
     p.body ? h('p', { class: 'post-body' }, p.body) : null,
     activityLink(p, activity),
+    visibilityRow(p),
     h('div', { class: 'post-meta' },
       h('span', { class: 'muted' }, timeAgo(p.created_at)),
       actionButton('Delete', async () => {
@@ -90,6 +91,28 @@ function ownPost(p, url, activity) {
     ),
   );
   return card;
+}
+
+// "🔒 Only my regulars" / "🌐 Public", with a one-tap switch.
+function visibilityRow(p) {
+  const row = h('div', { class: 'post-vis' });
+  const draw = () => {
+    const isPublic = p.visibility === 'public';
+    row.replaceChildren(
+      h('span', { class: 'help' }, isPublic ? '🌐 Public' : '🔒 Only my regulars'),
+      actionButton(isPublic ? 'Make regulars-only' : 'Make public', async () => {
+        const next = isPublic ? 'regulars' : 'public';
+        const { error } = await supabase.from('posts').update({ visibility: next }).eq('id', p.id);
+        if (error) return oops(error);
+        p.visibility = next;
+        toast(next === 'public'
+          ? (me.bartender.schedule_visibility === 'public' ? 'Update is now public' : 'Update is public. It shows on your page once your schedule is set to “Anyone with my link”.')
+          : 'Update is now for regulars only');
+        draw();
+      }, { class: 'btn btn-small btn-ghost' }));
+  };
+  draw();
+  return row;
 }
 
 export async function signOut() {

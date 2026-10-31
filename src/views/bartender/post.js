@@ -51,11 +51,24 @@ export async function postView() {
     showPreview();
   });
 
+  const visOption = (value, title, desc) => h('label', { class: 'choice' },
+    h('input', { type: 'radio', name: 'vis', value, checked: value === 'regulars' }),
+    h('span', {}, h('strong', {}, title), h('span', { class: 'help' }, desc)));
+  const scheduleIsPublic = me.bartender.schedule_visibility === 'public';
+  const visibility = h('fieldset', { class: 'card' },
+    h('legend', {}, 'Who can see this update?'),
+    visOption('regulars', 'Only my regulars', 'People who joined with your code or link.'),
+    visOption('public', 'Public', scheduleIsPublic
+      ? 'Also shown on your page to anyone signed in with your link.'
+      : 'Shown on your page to anyone signed in with your link, once your schedule is set to “Anyone with my link”.'),
+  );
+
   const submit = h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Post');
   const form = h('form', { class: 'stack', novalidate: true },
     h('label', { for: 'body' }, 'What’s happening?'),
     text, counter,
     file, photoBtn, preview,
+    visibility,
     err,
     submit,
   );
@@ -68,9 +81,10 @@ export async function postView() {
     let path = null;
     try {
       if (photo) path = await uploadPhoto('post-photos', uid(), photo);
-      const { error } = await supabase.from('posts').insert({ bartender_id: me.bartender.id, body, photo_path: path });
+      const vis = form.querySelector('input[name=vis]:checked')?.value || 'regulars';
+      const { error } = await supabase.from('posts').insert({ bartender_id: me.bartender.id, body, photo_path: path, visibility: vis });
       if (error) throw error;
-      toast('Posted! Your regulars can see it now.');
+      toast(vis === 'public' ? 'Posted publicly!' : 'Posted! Your regulars can see it now.');
       navigate('/', { replace: true });
     } catch (e2) {
       if (path) await supabase.storage.from('post-photos').remove([path]);

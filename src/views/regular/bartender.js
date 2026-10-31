@@ -27,7 +27,7 @@ export async function bartenderPageView({ params }) {
   const [barsRes, schedRes, postsRes, connRes] = await Promise.all([
     supabase.from('bars').select('id, name, area').eq('bartender_id', b.id).order('sort'),
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: addDays(today, 13) }),
-    supabase.from('posts').select('id, bartender_id, body, photo_path, created_at').eq('bartender_id', b.id)
+    supabase.from('posts').select('id, bartender_id, body, photo_path, created_at, visibility').eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(20),
     supabase.from('connections').select('bartender_id').eq('bartender_id', b.id).eq('regular_id', uid()).maybeSingle(),
   ]);
@@ -37,7 +37,7 @@ export async function bartenderPageView({ params }) {
   const [avatars, photos, responses] = await Promise.all([
     photoUrls('avatars', [b.photo_path]),
     photoUrls('post-photos', posts.map((p) => p.photo_path)),
-    connected ? loadRegularResponses(posts.map((p) => p.id)) : null,
+    isMe ? null : loadRegularResponses(posts.map((p) => p.id)),
   ]);
   const avatarUrl = avatars[b.photo_path];
 
@@ -78,17 +78,23 @@ export async function bartenderPageView({ params }) {
             h('strong', {}, x.name), x.area ? h('span', { class: 'help' }, ` · ${x.area}`) : null))))
       : null,
 
-    connected || isMe
+    // Regulars see every update; anyone else only the ones marked Public (RLS).
+    connected || isMe || posts.length
       ? h('section', { 'aria-labelledby': 'posts-h' },
           h('h2', { id: 'posts-h' }, 'Updates'),
           posts.length
             ? posts.map((p) => postCard(p, {
                 name, avatarUrl, photo: photos[p.photo_path], href: `#/b/${b.public_id}`,
-                footer: responses ? regularPostFooter(p, name, { counts: responses.counts[p.id], thread: responses.threads[p.id] }) : null,
+                footer: responses ? regularPostFooter(p, name, { counts: responses.counts[p.id], thread: responses.threads[p.id], readOnly: !connected }) : null,
               }))
             : h('p', { class: 'muted' }, 'No updates yet.'))
+      : null,
+    connected || isMe
+      ? null
       : h('div', { class: 'card note stack' },
-          h('p', {}, `Updates from ${name} are for regulars. Ask ${name} for today’s code to follow.`),
+          h('p', {}, posts.length
+            ? `Regulars see all of ${name}’s updates, and can react and reply. Ask ${name} for today’s code to follow.`
+            : `Updates from ${name} are for regulars. Ask ${name} for today’s code to follow.`),
           h('a', { class: 'btn btn-primary', href: '#/code' }, 'I have a code')),
 
     connected

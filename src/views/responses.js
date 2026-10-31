@@ -60,7 +60,10 @@ export async function loadRegularResponses(postIds) {
 
 // ===== Regular: footer under each post =====
 
-export function regularPostFooter(p, bartenderName, { counts = {}, thread } = {}) {
+export function regularPostFooter(p, bartenderName, { counts = {}, thread, readOnly = false } = {}) {
+  if (readOnly) {   // public post seen by a non-regular: counts only
+    return Object.keys(counts).length ? h('div', { class: 'post-responses' }, reactionBar(p, counts, false)) : null;
+  }
   const open = isOpen(p.created_at);
   const label = thread?.lastFromBartender ? `${bartenderName} answered you`
     : thread?.n ? `Your conversation (${thread.n})`
@@ -194,7 +197,7 @@ function conversation({ messages, postId, regularId, open, otherName, placeholde
 
 async function loadPost(id) {
   const { data: p } = await supabase.from('posts')
-    .select('id, bartender_id, body, photo_path, created_at, bartenders(public_id, photo_path, profiles!bartenders_id_fkey(display_name))')
+    .select('id, bartender_id, body, photo_path, created_at, visibility, bartenders(public_id, photo_path, profiles!bartenders_id_fkey(display_name))')
     .eq('id', id).maybeSingle();
   return p;
 }
@@ -210,13 +213,25 @@ export async function regularThreadView({ params }) {
   const b = p.bartenders;
   const name = b?.profiles?.display_name || 'Bartender';
 
-  const [{ data: messages }, avatars, photos, { counts }] = await Promise.all([
+  const [{ data: messages }, avatars, photos, { counts }, { data: conn }] = await Promise.all([
     supabase.from('post_replies').select('id, author_id, body, created_at, edited_at').eq('post_id', p.id).order('created_at'),
     photoUrls('avatars', [b?.photo_path]),
     photoUrls('post-photos', [p.photo_path]),
     loadRegularResponses([p.id]),
+    supabase.from('connections').select('bartender_id').eq('bartender_id', p.bartender_id).eq('regular_id', uid()).maybeSingle(),
   ]);
   const open = isOpen(p.created_at);
+
+  if (!conn) {   // a public post, seen by someone who doesn't follow this bartender
+    return screen(
+      backLink(`#/b/${b.public_id}`),
+      postCard(p, { name, avatarUrl: avatars[b?.photo_path], photo: photos[p.photo_path], href: `#/b/${b.public_id}`,
+        footer: regularPostFooter(p, name, { counts: counts[p.id] || {}, readOnly: true }) }),
+      h('div', { class: 'card note stack' },
+        h('p', {}, `Only ${name}’s regulars can react and reply. Ask ${name} for today’s code to follow.`),
+        h('a', { class: 'btn btn-primary', href: '#/code' }, 'I have a code')),
+    );
+  }
 
   return screen(
     backLink('#/'),
