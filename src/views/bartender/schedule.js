@@ -109,7 +109,7 @@ function visibilitySection() {
   return h('fieldset', { class: 'card' },
     h('legend', {}, 'Who can see my schedule?'),
     option('regulars', 'Only my regulars', 'People who joined with your code or link.'),
-    option('public', 'Anyone with my link', 'Any signed-in person with your page link. Your updates stay for regulars only.'),
+    option('public', 'Anyone with my link', 'Any signed-in person with your page link. They also see updates you mark Public.'),
     linkWrap,
   );
 }
