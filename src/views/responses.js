@@ -284,6 +284,15 @@ export async function bartenderResponsesView({ params }) {
 
   const open = isOpen(p.created_at);
   const reactions = rx.data || [];
+
+  // Faces + usual drinks of everyone who responded (RLS: only this bartender's regulars).
+  const people = [...new Set([...reactions.map((r) => r.regular_id), ...(rp.data || []).map((m) => m.regular_id)])];
+  const { data: details } = people.length
+    ? await supabase.from('regular_details').select('id, photo_path, usual').in('id', people)
+    : { data: [] };
+  const det = Object.fromEntries((details || []).map((d) => [d.id, d]));
+  const faces = await photoUrls('regular-photos', (details || []).map((d) => d.photo_path));
+  const face = (rid, name) => avatar(faces[det[rid]?.photo_path], name, 'avatar-sm');
   const byRegular = new Map();
   for (const m of rp.data || []) {
     if (!byRegular.has(m.regular_id)) byRegular.set(m.regular_id, { name: m.profiles?.display_name || 'Regular', messages: [] });
@@ -302,8 +311,9 @@ export async function bartenderResponsesView({ params }) {
       h('h2', { id: 'rx-h' }, 'Reactions'),
       reactions.length
         ? h('ul', { class: 'plain-list who-reacted' }, reactions.map((r) => h('li', {},
+            face(r.regular_id, r.profiles?.display_name),
             h('span', { class: 'who-emoji', 'aria-hidden': 'true' }, EMOJI[r.reaction]),
-            h('strong', {}, r.profiles?.display_name || 'Regular'),
+            h('a', { class: 'who-name', href: `#/regulars/${r.regular_id}` }, r.profiles?.display_name || 'Regular'),
             h('span', { class: 'help' }, ` · ${timeAgo(r.created_at)}`))))
         : h('p', { class: 'muted' }, 'No reactions yet.'),
       h('p', { class: 'help' }, 'Your regulars see how many of each, not who.')),
@@ -313,7 +323,10 @@ export async function bartenderResponsesView({ params }) {
       h('p', { class: 'help' }, 'Each conversation is private between you and that regular.'),
       threads.length
         ? threads.map(([rid, t]) => h('article', { class: 'card stack-tight' },
-            h('h3', { class: 'thread-name' }, t.name),
+            h('a', { class: 'thread-head', href: `#/regulars/${rid}` },
+              face(rid, t.name),
+              h('span', {}, h('h3', { class: 'thread-name' }, t.name),
+                det[rid]?.usual ? h('span', { class: 'help block' }, `🍸 ${det[rid].usual}`) : null)),
             conversation({ messages: t.messages, postId: p.id, regularId: rid, open, otherName: t.name,
               placeholder: `Answer ${t.name}…` })))
         : h('p', { class: 'muted' }, open ? 'No replies yet.' : 'No replies. Replies are closed for this update.')),

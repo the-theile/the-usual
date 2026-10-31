@@ -2,27 +2,32 @@ import { h, screen, actionButton, confirmDialog } from '../../lib/dom.js';
 import { supabase } from '../../supabase.js';
 import { me, setMode } from '../../state.js';
 import { navigate } from '../../router.js';
-import { barDay, fmtShift, timeAgo } from '../../lib/time.js';
+import { barDay, fmtShift, timeAgo, upcomingBirthdays, dayLabel } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { loadMyPostActivity, activityLink } from '../responses.js';
+import { loadMyRegulars } from './regulars.js';
+import { avatar } from '../regular/home.js';
 
 export async function bartenderHomeView() {
   const b = me.bartender;
   const today = barDay(b.timezone);
 
-  const [tonightRes, postsRes, barsRes] = await Promise.all([
+  const [tonightRes, postsRes, barsRes, regulars] = await Promise.all([
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: today }),
     supabase.from('posts').select('id, body, photo_path, created_at, visibility').eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(10),
     supabase.from('bars').select('id').eq('bartender_id', b.id).limit(1),
+    loadMyRegulars().catch((e) => { console.error(e); return []; }),
   ]);
+  const birthdays = upcomingBirthdays(regulars.filter((r) => !r.blocked), today, 7);
   const tonight = (tonightRes.data || []).filter((s) => !s.cancelled);
   const posts = postsRes.data || [];
   const hasBars = (barsRes.data || []).length > 0;
-  const [urls, activity] = await Promise.all([
+  const [urls, activity, faces] = await Promise.all([
     photoUrls('post-photos', posts.map((p) => p.photo_path)),
     loadMyPostActivity(posts.map((p) => p.id)),
+    photoUrls('regular-photos', birthdays.map((x) => x.person.photo_path)),
   ]);
   const unread = Object.values(activity).reduce((n, a) => n + a.unread, 0);
 
@@ -47,6 +52,15 @@ export async function bartenderHomeView() {
         : h('p', { class: 'shift-line muted' }, hasBars ? "You're off tonight" : 'Add your bars and shifts'),
       h('p', { class: 'link-text' }, 'Change my schedule ›'),
     ),
+
+    birthdays.length
+      ? h('section', { class: 'card birthdays', 'aria-labelledby': 'bd-h' },
+          h('p', { class: 'eyebrow', id: 'bd-h' }, '🎂 Birthdays this week'),
+          birthdays.map(({ person: r, ymd }) => h('a', { class: 'bd-line', href: `#/regulars/${r.regular_id}` },
+            avatar(faces[r.photo_path], r.display_name, 'avatar-sm'),
+            h('span', {}, h('strong', {}, r.display_name), ' · ', ymd === today ? 'Today!' : dayLabel(ymd, today))))
+        )
+      : null,
 
     h('nav', { class: 'menu', 'aria-label': 'More' },
       h('a', { class: 'menu-row', href: '#/schedule' }, 'My schedule', h('span', { 'aria-hidden': 'true' }, '›')),

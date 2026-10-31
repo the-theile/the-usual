@@ -16,10 +16,11 @@ import { postView } from './views/bartender/post.js';
 import { inviteView } from './views/bartender/invite.js';
 import { scheduleView, weeklyFormView, onceFormView, nightFormView } from './views/bartender/schedule.js';
 import { profileView } from './views/bartender/profile.js';
-import { regularsView } from './views/bartender/regulars.js';
+import { regularsView, regularDetailView } from './views/bartender/regulars.js';
 import { regularHomeView } from './views/regular/home.js';
 import { enterCodeView } from './views/regular/enter-code.js';
 import { bartenderPageView } from './views/regular/bartender.js';
+import { regularProfileView } from './views/regular/me.js';
 import { regularThreadView, bartenderResponsesView } from './views/responses.js';
 
 // ===== Routes =====
@@ -31,6 +32,7 @@ route('/join', joinView, { public: true });
 route('/onboarding', onboardingView, { noProfile: true });
 route('/become-bartender', becomeBartenderView);
 route('/code', enterCodeView);
+route('/me', regularProfileView);
 route('/b/:pid', bartenderPageView);
 route('/p/:id', regularThreadView);
 route('/post', postView, B);
@@ -43,6 +45,7 @@ route('/schedule/once/:id', onceFormView, B);
 route('/schedule/night/:patternId/:date', nightFormView, B);
 route('/profile', profileView, B);
 route('/regulars', regularsView, B);
+route('/regulars/:id', regularDetailView, B);
 route('/responses/:id', bartenderResponsesView, B);
 
 // ===== Rendering =====

@@ -14,6 +14,8 @@ A mobile-first web app built with plain JavaScript and Vite, with Supabase for s
 - **Schedule privacy:** "Only my regulars" or "Anyone with my link" (signed-in users only).
 - **Regular home:** who's working tonight, then recent posts.
 - **Reactions & replies:** regulars react to a post (🍻 ❤️ 😂 🔥 👀 👏, one each) and can reply privately. Regulars see reaction counts only; the bartender sees who reacted. Each reply is a private conversation between that regular and the bartender, who can answer (20 messages max per conversation). Senders can edit or delete their own messages. Reacting and replying close 7 days after a post. The bartender's home shows a "new" badge.
+- **Regular profiles:** regulars can add a photo, "my usual" (their go-to drink) and a birthday (month + day, no year) on **My profile**. Only the bartenders they follow can see these, plus a bartender who blocked them. Other regulars never do, and neither do a bartender-regular's own regulars. The regular home suggests setting this up once they follow someone.
+- **For bartenders:** My regulars shows each regular's photo and usual. Tapping a regular opens their page, where the bartender can keep a **private note** (only that bartender ever sees it). Their home shows **birthdays this week**, and the reactions & replies screen shows faces and usual drinks.
 - **Silent blocking,** enforced in the database (RLS): the blocked person loses posts, schedule, profile and photos, and codes and links stop working for them. They are never told.
 
 ## Project layout
@@ -63,7 +65,7 @@ The QR codes and invite links use the site's own address, so they work on whatev
 
 Paste `supabase/tests/privacy_test.sql` into the Supabase **SQL editor** and run it. It creates throwaway test users, checks 74 privacy rules and then **rolls everything back**. It should end without a `FAIL:` error.
 
-Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies) and `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts).
+Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) and `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes).
 
 ## Security notes
 
@@ -71,6 +73,7 @@ Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactio
 - Visibility helpers live in a `private` schema that the API doesn't expose, so nobody can ask "am I blocked?".
 - Invite codes: two words from a curated 499-word list plus a number from 10 to 99 (about 22 million combinations). Only one bar day's codes are live at a time. Code entry is rate-limited: 5 wrong tries per 10 minutes and 20 per day per account, and 50 per hour per IP address. A blocked person gets exactly the same "didn't work" answer as a typo.
 - QR codes and links use 122-bit random tokens.
+- A regular's photo, usual and birthday live in `regular_details`, not `profiles`, because `profiles` rows are also readable by a bartender's regulars.
 - Photos are in private buckets, served by short-lived signed URLs under the same rules as the posts and profiles they belong to.
 
 ## Planned later (the schema is ready)

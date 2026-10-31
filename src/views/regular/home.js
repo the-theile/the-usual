@@ -7,6 +7,8 @@ import { photoUrls } from '../../lib/images.js';
 import { signOut } from '../bartender/home.js';
 import { loadRegularResponses, regularPostFooter } from '../responses.js';
 
+const NUDGE_KEY = 'usual.profileNudgeDismissed';
+
 export function avatar(url, name, size = '') {
   return url
     ? h('img', { class: `avatar ${size}`, src: url, alt: '' })
@@ -42,11 +44,27 @@ export async function regularHomeView() {
         .in('bartender_id', ids).order('created_at', { ascending: false }).limit(30)
     : { data: [] };
 
-  const [avatars, photos, responses] = await Promise.all([
+  const [avatars, photos, responses, myDetails] = await Promise.all([
     photoUrls('avatars', bartenders.map((b) => b.photo_path)),
     photoUrls('post-photos', (posts || []).map((p) => p.photo_path)),
     loadRegularResponses((posts || []).map((p) => p.id)),
+    ids.length ? supabase.from('regular_details').select('photo_path, usual').eq('id', me.profile.id).maybeSingle() : { data: null },
   ]);
+
+  // Nudge: once they follow someone, suggest a photo + usual (until set or dismissed).
+  let dismissed = false;
+  try { dismissed = localStorage.getItem(NUDGE_KEY) === '1'; } catch { /* private mode */ }
+  const d = myDetails.data;
+  const nudge = ids.length && !dismissed && !(d?.photo_path || d?.usual)
+    ? h('div', { class: 'card note stack-tight' },
+        h('p', { class: 'lead' }, 'Help your bartenders recognise you'),
+        h('p', {}, 'Add a photo and your usual drink. Only bartenders you follow can see them.'),
+        h('a', { class: 'btn btn-primary', href: '#/me' }, 'Set up my profile'),
+        h('button', {
+          type: 'button', class: 'btn btn-ghost',
+          onClick: (e) => { try { localStorage.setItem(NUDGE_KEY, '1'); } catch { /* ignore */ } e.currentTarget.closest('.card').remove(); },
+        }, 'Not now'))
+    : null;
 
   const working = bartenders.filter((b) => b.shifts.length);
   const off = bartenders.filter((b) => !b.shifts.length);
@@ -78,6 +96,8 @@ export async function regularHomeView() {
           h('a', { class: 'btn btn-primary btn-xl', href: '#/code', 'data-autofocus': '' }, 'I have a code'))
       : h('div', { class: 'stack-tight' }, working.map(card), off.map(card)),
 
+    nudge,
+
     bartenders.length ? h('a', { class: 'btn btn-secondary', href: '#/code' }, '＋ Add a bartender') : null,
 
     bartenders.length
@@ -95,6 +115,7 @@ export async function regularHomeView() {
       : null,
 
     h('nav', { class: 'menu', 'aria-label': 'More' },
+      h('a', { class: 'menu-row', href: '#/me' }, 'My profile', h('span', { 'aria-hidden': 'true' }, '›')),
       me.bartender
         ? h('button', { type: 'button', class: 'menu-row', onClick: () => { setMode('bartender'); navigate('/'); } },
             'Go to my bartender screen', h('span', { 'aria-hidden': 'true' }, '›'))
