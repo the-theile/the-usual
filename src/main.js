@@ -20,6 +20,7 @@ import { regularsView } from './views/bartender/regulars.js';
 import { regularHomeView } from './views/regular/home.js';
 import { enterCodeView } from './views/regular/enter-code.js';
 import { bartenderPageView } from './views/regular/bartender.js';
+import { regularThreadView, bartenderResponsesView } from './views/responses.js';
 
 // ===== Routes =====
 const B = { bartender: true };
@@ -31,6 +32,7 @@ route('/onboarding', onboardingView, { noProfile: true });
 route('/become-bartender', becomeBartenderView);
 route('/code', enterCodeView);
 route('/b/:pid', bartenderPageView);
+route('/p/:id', regularThreadView);
 route('/post', postView, B);
 route('/invite', inviteView, B);
 route('/schedule', scheduleView, B);
@@ -41,6 +43,7 @@ route('/schedule/once/:id', onceFormView, B);
 route('/schedule/night/:patternId/:date', nightFormView, B);
 route('/profile', profileView, B);
 route('/regulars', regularsView, B);
+route('/responses/:id', bartenderResponsesView, B);
 
 // ===== Rendering =====
 const app = document.getElementById('app');
