@@ -7,6 +7,7 @@ import { barDay, addDays, dayLabel, fmtShift } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { avatar, postCard } from './home.js';
+import { loadRegularResponses, regularPostFooter } from '../responses.js';
 
 export async function bartenderPageView({ params }) {
   // RLS returns nothing if this person can't see the bartender (not connected and
@@ -33,9 +34,10 @@ export async function bartenderPageView({ params }) {
   const shifts = (schedRes.data || []).filter((s) => !s.cancelled);
   const posts = postsRes.data || [];
   const connected = !!connRes.data;
-  const [avatars, photos] = await Promise.all([
+  const [avatars, photos, responses] = await Promise.all([
     photoUrls('avatars', [b.photo_path]),
     photoUrls('post-photos', posts.map((p) => p.photo_path)),
+    connected ? loadRegularResponses(posts.map((p) => p.id)) : null,
   ]);
   const avatarUrl = avatars[b.photo_path];
 
@@ -80,7 +82,10 @@ export async function bartenderPageView({ params }) {
       ? h('section', { 'aria-labelledby': 'posts-h' },
           h('h2', { id: 'posts-h' }, 'Updates'),
           posts.length
-            ? posts.map((p) => postCard(p, { name, avatarUrl, photo: photos[p.photo_path], href: `#/b/${b.public_id}` }))
+            ? posts.map((p) => postCard(p, {
+                name, avatarUrl, photo: photos[p.photo_path], href: `#/b/${b.public_id}`,
+                footer: responses ? regularPostFooter(p, name, { counts: responses.counts[p.id], thread: responses.threads[p.id] }) : null,
+              }))
             : h('p', { class: 'muted' }, 'No updates yet.'))
       : h('div', { class: 'card note stack' },
           h('p', {}, `Updates from ${name} are for regulars. Ask ${name} for today’s code to follow.`),

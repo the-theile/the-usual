@@ -5,6 +5,7 @@ import { navigate } from '../../router.js';
 import { fmtShift, timeAgo } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { signOut } from '../bartender/home.js';
+import { loadRegularResponses, regularPostFooter } from '../responses.js';
 
 export function avatar(url, name, size = '') {
   return url
@@ -12,13 +13,14 @@ export function avatar(url, name, size = '') {
     : h('span', { class: `avatar avatar-initial ${size}`, 'aria-hidden': 'true' }, (name || '?').trim().charAt(0).toUpperCase());
 }
 
-export function postCard(p, { name, avatarUrl, photo, href }) {
+export function postCard(p, { name, avatarUrl, photo, href, footer }) {
   return h('article', { class: 'card post' },
     h('a', { class: 'post-head', href },
       avatar(avatarUrl, name, 'avatar-sm'),
       h('span', {}, h('strong', {}, name), h('span', { class: 'help block' }, timeAgo(p.created_at)))),
     photo ? h('img', { class: 'post-photo', src: photo, alt: `Photo from ${name}`, loading: 'lazy' }) : null,
     p.body ? h('p', { class: 'post-body' }, p.body) : null,
+    footer || null,
   );
 }
 
@@ -40,9 +42,10 @@ export async function regularHomeView() {
         .in('bartender_id', ids).order('created_at', { ascending: false }).limit(30)
     : { data: [] };
 
-  const [avatars, photos] = await Promise.all([
+  const [avatars, photos, responses] = await Promise.all([
     photoUrls('avatars', bartenders.map((b) => b.photo_path)),
     photoUrls('post-photos', (posts || []).map((p) => p.photo_path)),
+    loadRegularResponses((posts || []).map((p) => p.id)),
   ]);
 
   const working = bartenders.filter((b) => b.shifts.length);
@@ -83,7 +86,10 @@ export async function regularHomeView() {
           (posts || []).length
             ? posts.map((p) => {
                 const b = nameOf[p.bartender_id];
-                return postCard(p, { name: b.display_name, avatarUrl: avatars[b.photo_path], photo: photos[p.photo_path], href: `#/b/${b.public_id}` });
+                return postCard(p, {
+                  name: b.display_name, avatarUrl: avatars[b.photo_path], photo: photos[p.photo_path], href: `#/b/${b.public_id}`,
+                  footer: regularPostFooter(p, b.display_name, { counts: responses.counts[p.id], thread: responses.threads[p.id] }),
+                });
               })
             : h('p', { class: 'muted' }, 'No updates yet.'))
       : null,

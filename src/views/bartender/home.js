@@ -5,6 +5,7 @@ import { navigate } from '../../router.js';
 import { barDay, fmtShift, timeAgo } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
+import { loadMyPostActivity, activityLink } from '../responses.js';
 
 export async function bartenderHomeView() {
   const b = me.bartender;
@@ -19,7 +20,11 @@ export async function bartenderHomeView() {
   const tonight = (tonightRes.data || []).filter((s) => !s.cancelled);
   const posts = postsRes.data || [];
   const hasBars = (barsRes.data || []).length > 0;
-  const urls = await photoUrls('post-photos', posts.map((p) => p.photo_path));
+  const [urls, activity] = await Promise.all([
+    photoUrls('post-photos', posts.map((p) => p.photo_path)),
+    loadMyPostActivity(posts.map((p) => p.id)),
+  ]);
+  const unread = Object.values(activity).reduce((n, a) => n + a.unread, 0);
 
   return screen(
     h('header', { class: 'topbar' },
@@ -55,9 +60,10 @@ export async function bartenderHomeView() {
     ),
 
     h('section', { 'aria-labelledby': 'my-posts' },
-      h('h2', { id: 'my-posts' }, 'My recent updates'),
+      h('h2', { id: 'my-posts' }, 'My recent updates',
+        unread ? h('span', { class: 'badge' }, `${unread} new`) : null),
       posts.length
-        ? posts.map((p) => ownPost(p, urls[p.photo_path]))
+        ? posts.map((p) => ownPost(p, urls[p.photo_path], activity[p.id]))
         : h('p', { class: 'muted' }, 'Nothing posted yet. Tap “Post an update” to share tonight’s special.'),
     ),
 
@@ -65,10 +71,11 @@ export async function bartenderHomeView() {
   );
 }
 
-function ownPost(p, url) {
+function ownPost(p, url, activity) {
   const card = h('article', { class: 'card post' },
     url ? h('img', { class: 'post-photo', src: url, alt: 'Photo for this update', loading: 'lazy' }) : null,
     p.body ? h('p', { class: 'post-body' }, p.body) : null,
+    activityLink(p, activity),
     h('div', { class: 'post-meta' },
       h('span', { class: 'muted' }, timeAgo(p.created_at)),
       actionButton('Delete', async () => {

@@ -240,3 +240,32 @@ section > h2 { margin-bottom: 0; }
 fieldset.card > legend { float: left; width: 100%; margin-bottom: 0.75rem; }
 fieldset.card > legend + * { clear: both; }
 #toast:not(.show) { visibility: hidden; transition: transform 0.25s ease, visibility 0s 0.25s; }
+
+/* ===== Reactions & replies ===== */
+.post-responses { display: flex; flex-direction: column; gap: 0.6rem; border-top: 1px solid var(--border); padding-top: 0.6rem; }
+.reactions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.reaction {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  min-height: 44px; min-width: 52px; padding: 0.25rem 0.7rem;
+  border-radius: 999px; border: 1px solid var(--border); background: var(--card);
+  color: var(--text); font: inherit; font-size: 1.15rem; cursor: pointer;
+}
+.reaction.mine { border-color: var(--amber); background: #4a2f12; box-shadow: 0 0 0 2px rgba(245, 176, 65, 0.35); }
+.reaction:disabled { cursor: default; opacity: 1; }
+.reaction:focus-visible { outline: 3px solid var(--amber-hi); outline-offset: 2px; }
+.reaction-n { font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.reply-link { color: var(--amber-hi); font-weight: 700; text-decoration: none; padding: 0.5rem 0; display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
+.reply-link .badge { margin-left: 0; }
+.reply-link.has-answer { color: var(--ok); }
+
+.msgs { display: flex; flex-direction: column; gap: 0.5rem; }
+.msg { max-width: 88%; padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--card); }
+.msg-mine { align-self: flex-end; background: #3d2814; border-color: var(--amber); }
+.msg-theirs { align-self: flex-start; }
+.msg-who { font-size: 0.85rem; }
+.msg-body { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0.15rem 0 0; font-size: 1.1rem; }
+.msg-actions { display: flex; gap: 0.25rem; justify-content: flex-end; flex-wrap: wrap; }
+.msg textarea { min-height: 5rem; }
+.thread-name { margin: 0; font-size: 1.15rem; }
+.who-reacted li { padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 1.1rem; }
+.who-emoji { display: inline-block; width: 2rem; }

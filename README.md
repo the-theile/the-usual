@@ -13,6 +13,7 @@ A mobile-first web app built with plain JavaScript and Vite, with Supabase for s
 - **Schedule:** one-off shifts, weekly shifts, and changing or cancelling a single night.
 - **Schedule privacy:** "Only my regulars" or "Anyone with my link" (signed-in users only).
 - **Regular home:** who's working tonight, then recent posts.
+- **Reactions & replies:** regulars react to a post (🍻 ❤️ 😂 🔥 👀 👏, one each) and can reply privately. Regulars see reaction counts only; the bartender sees who reacted. Each reply is a private conversation between that regular and the bartender, who can answer (20 messages max per conversation). Senders can edit or delete their own messages. Reacting and replying close 7 days after a post. The bartender's home shows a "new" badge.
 - **Silent blocking,** enforced in the database (RLS): the blocked person loses posts, schedule, profile and photos, and codes and links stop working for them. They are never told.
 
 ## Project layout
@@ -27,7 +28,7 @@ src/lib/                   DOM helpers, time/bar-day maths, image compression, t
 src/views/                 one file per screen (bartender/, regular/)
 src/styles/                theme tokens, base, components
 supabase/migrations/       schema, privacy helpers, RLS, functions, storage
-supabase/tests/            privacy test suite (rolls back; safe on the live project)
+supabase/tests/            privacy + reactions/replies test suites (roll back; safe on the live project)
 vercel.json                security headers (CSP etc.)
 ```
 
@@ -61,6 +62,8 @@ The QR codes and invite links use the site's own address, so they work on whatev
 ### 3. Run the privacy tests on the live database (optional, recommended)
 
 Paste `supabase/tests/privacy_test.sql` into the Supabase **SQL editor** and run it. It creates throwaway test users, checks 74 privacy rules and then **rolls everything back**. It should end without a `FAIL:` error.
+
+Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies).
 
 ## Security notes
 
