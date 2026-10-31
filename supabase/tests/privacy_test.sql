@@ -265,9 +265,8 @@ begin
   perform public.reset_invites();
   j := public.get_today_invite();
   perform pg_temp.ok(j->>'code' <> (select v from t where k='code'), 'reset gives a new code');
-  perform pg_temp.login(pg_temp.id('tom'));  -- tom is blocked but that path is identical; use a clean user:
   perform pg_temp.admin();
-  delete from private.invite_attempts;
+  delete from private.invite_attempts where user_id in (select id from ids);
   perform pg_temp.login(pg_temp.id('sam'));
   perform pg_temp.ok(public.redeem_invite((select v from t where k='code'))->>'reason' = 'not_valid', 'old code dead after reset');
   perform pg_temp.ok(public.redeem_invite((select v from t where k='link'))->>'reason' = 'not_valid', 'old link dead after reset');
@@ -278,7 +277,7 @@ end $$;
 do $$
 begin
   perform pg_temp.admin();
-  delete from private.invite_attempts;
+  delete from private.invite_attempts where user_id in (select id from ids);
   delete from public.connections where regular_id = pg_temp.id('sam');
   insert into t select 'expired', code from public.invites
    where kind = 'daily' and revoked_at is null and bartender_id = pg_temp.id('alice');

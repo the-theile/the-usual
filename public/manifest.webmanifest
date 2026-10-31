@@ -1,0 +1,10 @@
+{
+  "name": "The Usual",
+  "short_name": "The Usual",
+  "description": "Know where your bartender is working tonight.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1c120b",
+  "theme_color": "#1c120b",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
