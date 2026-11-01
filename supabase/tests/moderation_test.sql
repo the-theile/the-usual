@@ -1,4 +1,4 @@
--- The Usual — reports, moderator tools and metrics test suite (migration 0011).
+-- The Usual — reports, moderator tools and metrics test suite (migrations 0011 + 0012).
 -- Runs in one transaction and ROLLS BACK, so it is safe on a real project:
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/moderation_test.sql
 -- Any failure raises "FAIL: ..." and aborts. Success ends with "ALL MODERATION TESTS PASSED".
@@ -182,6 +182,33 @@ begin
   perform public.mod_resolve(v_r, p_note => 'Is the real Bob');
   perform pg_temp.ok((select status from public.mod_reports('closed') where id = v_r) = 'dismissed', 'neither action = dismissed');
   perform pg_temp.ok((select count(*) from public.mod_log()) = 4, 'every action is in the log (remove, suspend, unsuspend, dismiss)');
+end $$;
+
+-- ---------- Records are deleted 12 months after a report is closed ----------
+do $$
+declare v_r uuid;
+begin
+  perform pg_temp.admin();
+  insert into private.reports (reporter_id, reported_user_id, kind, target_id, reason, status, resolved_at, created_at, snapshot_body) values
+    (pg_temp.id('una'), pg_temp.id('bob'), 'person', gen_random_uuid(), 'spam', 'dismissed', now() - interval '13 months', now() - interval '14 months', 'old closed'),
+    (pg_temp.id('una'), pg_temp.id('bob'), 'person', gen_random_uuid(), 'spam', 'actioned',  now() - interval '11 months', now() - interval '12 months', 'recent closed'),
+    (pg_temp.id('una'), pg_temp.id('bob'), 'person', gen_random_uuid(), 'spam', 'open',      null,                         now() - interval '2 years',   'old but open');
+  insert into private.mod_actions (moderator_id, action, target_name, created_at) values (pg_temp.id('mo'), 'dismiss', 'Old', now() - interval '13 months');
+
+  perform pg_temp.login(pg_temp.id('rita'));
+  perform pg_temp.fails('select private.purge_old_moderation()', 'nobody can run the clean-up through the API');
+
+  -- Resolving any report runs the clean-up.
+  perform pg_temp.login(pg_temp.id('mo'));
+  select id into v_r from public.mod_reports('open') where kind = 'reply' and reported_user_id = pg_temp.id('rita');
+  perform public.mod_resolve(v_r);
+
+  perform pg_temp.admin();
+  perform pg_temp.ok(not exists (select 1 from private.reports where snapshot_body = 'old closed'), 'a report closed over 12 months ago is deleted');
+  perform pg_temp.ok(exists (select 1 from private.reports where snapshot_body = 'recent closed'), 'a report closed under 12 months ago is kept');
+  perform pg_temp.ok(exists (select 1 from private.reports where snapshot_body = 'old but open'), 'an open report is kept however old');
+  perform pg_temp.ok(not exists (select 1 from private.mod_actions where target_name = 'Old'), 'log entries over 12 months old are deleted');
+  delete from private.reports where snapshot_body in ('recent closed', 'old but open');
 end $$;
 
 -- ---------- Account deletion keeps the record ----------

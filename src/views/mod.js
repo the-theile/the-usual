@@ -87,7 +87,7 @@ function reportCard(r, photo) {
     const what = [remove && 'remove it', suspend && `suspend ${r.reported_name} (${len.selectedOptions[0].text.toLowerCase()})`].filter(Boolean).join(' and ');
     const ok = await confirmDialog({
       title: what ? `${what[0].toUpperCase()}${what.slice(1)}?` : 'Dismiss this report?',
-      body: suspend ? 'They are signed out and can’t sign back in. Nobody is told why.' : remove ? 'It is deleted for everyone. The report keeps a copy.' : 'Nothing happens to anyone.',
+      body: suspend ? 'They are signed out and can’t sign back in. Nobody is told why.' : remove ? 'It is deleted for everyone, with any photo. The report keeps a copy of the text.' : 'Nothing happens to anyone.',
       confirmText: what ? 'Yes, do it' : 'Dismiss', danger: !!what, cancelText: 'Cancel',
     });
     if (!ok) return;
@@ -95,6 +95,11 @@ function reportCard(r, photo) {
       p_report: r.id, p_remove: remove, p_suspend: suspend, p_days: suspend ? days() : null, p_note: note.value.trim(),
     });
     if (error) return oops(error, error.message?.includes('already_resolved') ? 'Someone already handled this report.' : undefined);
+    // The post is gone; delete its photo too, so reports only ever keep a copy of the text (migration 0012).
+    if (remove && r.kind === 'post' && r.photo_path) {
+      const { error: e2 } = await supabase.storage.from('post-photos').remove([r.photo_path]);
+      if (e2) console.error(e2);
+    }
     toast(what ? 'Done' : 'Report dismissed');
     reload();
   }
