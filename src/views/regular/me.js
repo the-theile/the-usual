@@ -128,11 +128,12 @@ export async function regularProfileView() {
 
   return screen(
     backLink('#/'),
-    h('h1', {}, 'My profile'),
+    h('h1', {}, me.bartender ? 'My regular profile' : 'My profile'),
     h('p', { class: 'lead' }, 'Help your bartenders recognise you.'),
+    me.bartender ? h('p', { class: 'help' }, 'This is separate from your bartender profile. Your name is shared by both.') : null,
     h('section', { class: 'center stack' }, photoBox, file, photoLabel, removeBtn),
     form,
     h('p', { class: 'help' }, 'Only bartenders you follow can see your photo, usual and birthday. Other regulars never do.'),
-    me.bartender ? null : deleteAccountSection(), // bartenders delete from My profile & bars
+    me.bartender ? null : deleteAccountSection(), // bartenders delete from My bartender profile & bars
   );
 }

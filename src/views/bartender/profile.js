@@ -126,8 +126,9 @@ export async function profileView({ query }) {
 
   return screen(
     setup ? null : backLink('#/'),
-    h('h1', {}, setup ? 'Set up your page' : 'My profile & bars'),
+    h('h1', {}, setup ? 'Set up your page' : 'My bartender profile & bars'),
     setup ? h('p', { class: 'lead' }, 'Add a photo so regulars recognise you, and the bars where you work. You can change all of this later.') : null,
+    setup ? null : h('p', { class: 'help' }, 'This is separate from your regular profile. Your name is shared by both.'),
     h('section', { class: 'center stack' }, img, file, photoLabel),
     h('section', { 'aria-labelledby': 'bars-h' }, h('h2', { id: 'bars-h' }, 'Where I work'), barList, barForm),
     h('section', { 'aria-labelledby': 'about-h' }, h('h2', { id: 'about-h' }, 'About me'), detailsForm),

@@ -119,11 +119,11 @@ export async function regularHomeView() {
       : null,
 
     h('nav', { class: 'menu', 'aria-label': 'More' },
-      h('a', { class: 'menu-row', href: '#/me' }, 'My profile', h('span', { 'aria-hidden': 'true' }, '›')),
+      h('a', { class: 'menu-row', href: '#/me' }, me.bartender ? 'My regular profile' : 'My profile', h('span', { 'aria-hidden': 'true' }, '›')),
       installMenuRow(),
       me.bartender
         ? h('button', { type: 'button', class: 'menu-row', onClick: () => { setMode('bartender'); navigate('/'); } },
-            'Go to my bartender screen', h('span', { 'aria-hidden': 'true' }, '›'))
+            'Switch to my bartender side', h('span', { 'aria-hidden': 'true' }, '›'))
         : h('a', { class: 'menu-row', href: '#/become-bartender' }, 'Are you a bartender? Set up your page', h('span', { 'aria-hidden': 'true' }, '›')),
       h('button', { type: 'button', class: 'menu-row', onClick: signOut }, 'Sign out', h('span', { 'aria-hidden': 'true' }, '›')),
     ),
