@@ -1,5 +1,8 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/tender/:handle", "destination": "/" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

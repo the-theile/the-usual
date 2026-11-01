@@ -3,7 +3,7 @@ import './styles/base.css';
 import './styles/components.css';
 
 import { supabase } from './supabase.js';
-import { me, loadMe, getMode } from './state.js';
+import { me, loadMe, getMode, setReturnTo } from './state.js';
 import { route, match, parseHash, navigate } from './router.js';
 import { h, screen } from './lib/dom.js';
 import { initInstall } from './lib/install.js';
@@ -20,7 +20,7 @@ import { profileView } from './views/bartender/profile.js';
 import { regularsView, regularDetailView } from './views/bartender/regulars.js';
 import { regularHomeView } from './views/regular/home.js';
 import { enterCodeView } from './views/regular/enter-code.js';
-import { bartenderPageView } from './views/regular/bartender.js';
+import { bartenderPageView, tenderPageView } from './views/regular/bartender.js';
 import { regularProfileView } from './views/regular/me.js';
 import { regularThreadView, bartenderResponsesView } from './views/responses.js';
 
@@ -36,6 +36,7 @@ route('/become-bartender', becomeBartenderView, { title: 'Set up your bartender 
 route('/code', enterCodeView, { title: 'Add a bartender' });
 route('/me', regularProfileView, { title: 'My profile' });
 route('/b/:pid', bartenderPageView, { title: 'Bartender' });
+route('/tender/:handle', tenderPageView, { title: 'Bartender' });
 route('/p/:id', regularThreadView, { title: 'Update' });
 route('/post', postView, { ...B, title: 'Post an update' });
 route('/invite', inviteView, { ...B, title: 'Invite a regular' });
@@ -61,8 +62,10 @@ async function render() {
   const r = match(path) || match('/');
   const signedIn = !!me.session;
 
-  if (!r.opts.public && !signedIn) return navigate('/welcome', { replace: true });
-  if (signedIn && !me.profile && !r.opts.public && !r.opts.noProfile) return navigate('/onboarding', { replace: true });
+  // Remember a real destination (not home) so sign-in / onboarding can return to it.
+  const remember = () => { if (match(path) && path !== '/') setReturnTo(location.hash.slice(1)); };
+  if (!r.opts.public && !signedIn) { remember(); return navigate('/welcome', { replace: true }); }
+  if (signedIn && !me.profile && !r.opts.public && !r.opts.noProfile) { remember(); return navigate('/onboarding', { replace: true }); }
   if (signedIn && me.profile && (path === '/welcome' || path === '/signin' || path === '/onboarding')) {
     return navigate('/', { replace: true });
   }
@@ -87,6 +90,10 @@ async function render() {
   const auto = app.querySelector('[data-autofocus]');
   (auto || app).focus({ preventScroll: true });
 }
+
+// gettheusual.bar/tender/<handle> (vercel.json rewrite) → #/tender/<handle>, so the app stays hash-routed.
+const tenderPath = location.pathname.match(/^\/tender\/([^/]+)\/?$/);
+if (tenderPath && !location.hash) history.replaceState(null, '', `/#/tender/${tenderPath[1]}`);
 
 window.addEventListener('hashchange', render);
 initInstall();

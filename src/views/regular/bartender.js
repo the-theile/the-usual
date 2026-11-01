@@ -1,4 +1,4 @@
-// #/b/:public_id — a bartender's page as a regular (or public-schedule viewer) sees it.
+// #/b/:public_id (or #/tender/:handle) — a bartender's page as a regular (or public-schedule viewer) sees it.
 import { h, screen, backLink, actionButton, confirmDialog } from '../../lib/dom.js';
 import { supabase } from '../../supabase.js';
 import { uid } from '../../state.js';
@@ -9,17 +9,31 @@ import { toast, oops } from '../../lib/toast.js';
 import { avatar, postCard } from './home.js';
 import { loadRegularResponses, regularPostFooter } from '../responses.js';
 
+// Same message whether the page doesn't exist or this person can't see it.
+function pageNotFound() {
+  return screen(backLink('#/'), h('h1', {}, 'Page not found'),
+    h('p', { class: 'lead' }, 'This page isn’t available. If you know this bartender, ask them for today’s code.'),
+    h('a', { class: 'btn btn-primary', href: '#/code' }, 'I have a code'));
+}
+
+// ===== #/tender/:handle — the same page, by the bartender's chosen link =====
+// resolve_handle applies the page's own visibility rules, and also accepts old handles.
+export async function tenderPageView(ctx) {
+  const { data, error } = await supabase.rpc('resolve_handle', { p_handle: ctx.params.handle });
+  if (error) throw error;
+  const row = data?.[0];
+  if (!row) return pageNotFound();
+  if (row.handle && row.handle !== ctx.params.handle) history.replaceState(null, '', `#/tender/${row.handle}`);
+  return bartenderPageView({ ...ctx, params: { pid: row.public_id } });
+}
+
 export async function bartenderPageView({ params }) {
   // RLS returns nothing if this person can't see the bartender (not connected and
   // not public, or blocked). Same message either way.
   const { data: b } = await supabase.from('bartenders')
     .select('id, public_id, bio, photo_path, timezone, schedule_visibility, profiles!bartenders_id_fkey(display_name)')
     .eq('public_id', params.pid).maybeSingle();
-  if (!b) {
-    return screen(backLink('#/'), h('h1', {}, 'Page not found'),
-      h('p', { class: 'lead' }, 'This page isn’t available. If you know this bartender, ask them for today’s code.'),
-      h('a', { class: 'btn btn-primary', href: '#/code' }, 'I have a code'));
-  }
+  if (!b) return pageNotFound();
   const name = b.profiles?.display_name || 'Bartender';
   const isMe = b.id === uid();
   const today = barDay(b.timezone);
