@@ -87,7 +87,7 @@ function visibilitySection() {
     linkWrap.replaceChildren();
     if (me.bartender.schedule_visibility !== 'public') return;
     linkWrap.append(actionButton('Copy my schedule page link', async () => {
-      const url = `${location.origin}/#/b/${b.public_id}`;
+      const url = me.bartender.handle ? `${location.origin}/tender/${me.bartender.handle}` : `${location.origin}/#/b/${b.public_id}`;
       try { await navigator.clipboard.writeText(url); toast('Link copied'); }
       catch { linkWrap.append(h('input', { type: 'text', readonly: true, value: url, 'aria-label': 'Schedule page link' })); }
     }, { class: 'btn btn-ghost btn-small' }));

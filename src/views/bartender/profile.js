@@ -132,6 +132,7 @@ export async function profileView({ query }) {
     h('section', { class: 'center stack' }, img, file, photoLabel),
     h('section', { 'aria-labelledby': 'bars-h' }, h('h2', { id: 'bars-h' }, 'Where I work'), barList, barForm),
     h('section', { 'aria-labelledby': 'about-h' }, h('h2', { id: 'about-h' }, 'About me'), detailsForm),
+    setup ? null : linkSection(),
     setup
       ? h('div', { class: 'stack' },
           h('a', { class: 'btn btn-primary btn-xl', href: '#/schedule' }, 'Next: add my shifts'),
@@ -140,3 +141,104 @@ export async function profileView({ query }) {
   );
 }
 
+
+// ===== My link (gettheusual.bar/tender/<handle>) =====
+// The handle is only a nicer address for the same page; resolve_handle applies the
+// page's own visibility rules. Old handles keep working and stay reserved (0010).
+
+const HANDLE_RE = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
+const HANDLE_ERRORS = {
+  handle_invalid: 'Use 3–30 letters, numbers or hyphens. It can’t start or end with a hyphen.',
+  handle_reserved: 'That link is reserved. Please pick another.',
+  handle_taken: 'That link is taken. Please pick another.',
+  handle_cooldown: 'You changed your link recently. You can pick a new one 30 days after the last change.',
+};
+const COOLDOWN_DAYS = 30;
+
+function linkSection() {
+  const wrap = h('section', { 'aria-labelledby': 'link-h' });
+  const render = () => wrap.replaceChildren(...linkSectionBody(render));
+  render();
+  return wrap;
+}
+
+function linkSectionBody(rerender) {
+  const b = me.bartender;
+  const base = `${location.host}/tender/`;
+  const urlFor = (handle) => `${location.origin}/tender/${handle}`;
+  const changed = b.handle_changed_at ? new Date(b.handle_changed_at) : null;
+  const nextChange = changed ? new Date(changed.getTime() + COOLDOWN_DAYS * 864e5) : null;
+  const coolingDown = nextChange && nextChange > new Date();
+
+  const input = h('input', {
+    id: 'handle', type: 'text', maxlength: 30, value: b.handle || '', placeholder: 'e.g. jess-pours',
+    autocapitalize: 'none', autocomplete: 'off', spellcheck: 'false', 'aria-describedby': 'handle-help',
+  });
+  const preview = h('p', { class: 'link-text' });
+  const showPreview = () => { preview.textContent = base + (input.value || '…'); };
+  input.addEventListener('input', () => {
+    input.value = input.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    showPreview();
+  });
+  showPreview();
+
+  const err = h('p', { class: 'error', role: 'alert' });
+  const form = h('form', { class: 'stack', novalidate: true },
+    h('div', { class: 'stack-tight' }, h('label', { for: 'handle' }, 'Your link'), input, preview,
+      h('p', { class: 'help', id: 'handle-help' },
+        `Letters, numbers and hyphens. You can change it once every ${COOLDOWN_DAYS} days, and old links keep working.`,
+        coolingDown && b.handle ? ` You can pick a new one after ${nextChange.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.` : '')),
+    err,
+    h('button', { type: 'submit', class: 'btn btn-primary' }, b.handle ? 'Save my link' : 'Get my link'),
+  );
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const handle = input.value.replace(/^-+|-+$/g, '');
+    input.value = handle; showPreview();
+    if (handle === (b.handle || '')) return;
+    if (!handle) { err.textContent = 'Please type a link, or use “Remove my link” below.'; input.focus(); return; }
+    if (!HANDLE_RE.test(handle) || handle.includes('--')) { err.textContent = HANDLE_ERRORS.handle_invalid; input.focus(); return; }
+    err.textContent = '';
+    const ok = await confirmDialog({
+      title: `Use ${base}${handle}?`,
+      body: `You can change it again after ${COOLDOWN_DAYS} days.${b.handle ? ` ${base}${b.handle} will keep working.` : ''}`,
+      confirmText: 'Yes, use this link', cancelText: 'Let me change it',
+    });
+    if (!ok) return;
+    if (await saveHandle(handle, err)) { toast('Link saved'); rerender(); }
+  });
+
+  return [
+    h('h2', { id: 'link-h' }, 'My link'),
+    h('p', { class: 'help' }, 'A short link for your bio or business card. It opens your page with the same privacy as now: only people who can already see your page will see it.'),
+    form,
+    b.handle
+      ? h('div', { class: 'stack-tight' },
+          actionButton('Copy my link', async () => {
+            try { await navigator.clipboard.writeText(urlFor(b.handle)); toast('Link copied'); }
+            catch { toast(urlFor(b.handle)); }
+          }, { class: 'btn btn-secondary' }),
+          actionButton('Remove my link', async () => {
+            const ok = await confirmDialog({
+              title: 'Remove your link?',
+              body: `${base}${b.handle} will keep working and stays yours. Your page’s regular link is not affected.`,
+              confirmText: 'Remove', cancelText: 'Keep it', danger: true,
+            });
+            if (!ok) return;
+            if (await saveHandle(null, err)) { toast('Link removed'); rerender(); }
+          }, { class: 'btn btn-ghost' }))
+      : null,
+  ];
+}
+
+async function saveHandle(handle, err) {
+  const { error } = await supabase.rpc('set_handle', { p_handle: handle });
+  if (error) {
+    const key = Object.keys(HANDLE_ERRORS).find((k) => error.message?.includes(k));
+    if (key) { err.textContent = HANDLE_ERRORS[key]; return false; }
+    oops(error);
+    return false;
+  }
+  await loadMe();
+  return true;
+}

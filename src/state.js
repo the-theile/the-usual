@@ -4,7 +4,7 @@ import { supabase } from './supabase.js';
 export const me = {
   session: null,
   profile: null,     // { id, display_name }
-  bartender: null,   // { id, public_id, bio, photo_path, timezone, schedule_visibility } or null
+  bartender: null,   // { id, public_id, handle, bio, photo_path, timezone, schedule_visibility } or null
 };
 
 export const uid = () => me.session?.user?.id ?? null;
@@ -18,7 +18,7 @@ export async function loadMe() {
   const id = me.session.user.id;
   const [p, b] = await Promise.all([
     supabase.from('profiles').select('id, display_name').eq('id', id).maybeSingle(),
-    supabase.from('bartenders').select('id, public_id, bio, photo_path, timezone, schedule_visibility').eq('id', id).maybeSingle(),
+    supabase.from('bartenders').select('id, public_id, handle, handle_changed_at, bio, photo_path, timezone, schedule_visibility').eq('id', id).maybeSingle(),
   ]);
   me.profile = p.data ?? null;
   me.bartender = b.data ?? null;
