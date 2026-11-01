@@ -18,6 +18,9 @@ function maskPhone(e164) {
   return `the number ending in ${e164.slice(-4)}`;
 }
 
+// Opens in a new tab so the sign-in flow isn't lost.
+const legalLink = (href, text) => h('a', { href, target: '_blank', rel: 'noopener' }, text);
+
 export async function signinView() {
   const root = screen();
   let phone = '';
@@ -38,6 +41,9 @@ export async function signinView() {
         "We'll text you a 6-digit code. Nobody else ever sees your number. Outside the US or Canada? Start with + and your country code."),
       err,
       h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Text me a code'),
+      h('p', { class: 'help' },
+        'By tapping “Text me a code” you agree to our ', legalLink('/terms', 'Terms'), ' and ',
+        legalLink('/privacy', 'Privacy Policy'), ', and to get a one-time sign-in code by text. Message and data rates may apply.'),
     );
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
