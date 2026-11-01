@@ -171,6 +171,8 @@
 .bc-bar { font-weight: 700; color: var(--amber-hi); }
 .bc-shift { font-size: 1.1rem; }
 .bc-off { color: var(--muted); font-size: 1.1rem; }
+.bc-pin { color: var(--amber-hi); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post.pinned { border-color: var(--amber); }
 .bartender-card.on { border-left: 6px solid var(--amber); }
 .bartender-card.off { opacity: 0.92; }
 

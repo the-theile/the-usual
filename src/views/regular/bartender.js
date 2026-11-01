@@ -24,15 +24,19 @@ export async function bartenderPageView({ params }) {
   const isMe = b.id === uid();
   const today = barDay(b.timezone);
 
-  const [barsRes, schedRes, postsRes, connRes] = await Promise.all([
+  const POST_COLS = 'id, bartender_id, body, photo_path, created_at, visibility, pinned_at';
+  const [barsRes, schedRes, postsRes, pinnedRes, connRes] = await Promise.all([
     supabase.from('bars').select('id, name, area').eq('bartender_id', b.id).order('sort'),
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: addDays(today, 13) }),
-    supabase.from('posts').select('id, bartender_id, body, photo_path, created_at, visibility').eq('bartender_id', b.id)
+    supabase.from('posts').select(POST_COLS).eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(20),
+    supabase.from('posts').select(POST_COLS).eq('bartender_id', b.id).not('pinned_at', 'is', null).maybeSingle(),
     supabase.from('connections').select('bartender_id').eq('bartender_id', b.id).eq('regular_id', uid()).maybeSingle(),
   ]);
   const shifts = (schedRes.data || []).filter((s) => !s.cancelled);
-  const posts = postsRes.data || [];
+  // The pinned update comes first, even if it's older than the latest 20 (RLS still decides who sees it).
+  const pinned = pinnedRes.data;
+  const posts = pinned ? [pinned, ...(postsRes.data || []).filter((p) => p.id !== pinned.id)] : (postsRes.data || []);
   const connected = !!connRes.data;
   const [avatars, photos, responses] = await Promise.all([
     photoUrls('avatars', [b.photo_path]),
@@ -84,7 +88,7 @@ export async function bartenderPageView({ params }) {
           h('h2', { id: 'posts-h' }, 'Updates'),
           posts.length
             ? posts.map((p) => postCard(p, {
-                name, avatarUrl, photo: photos[p.photo_path], href: `#/b/${b.public_id}`,
+                name, avatarUrl, photo: photos[p.photo_path], href: `#/b/${b.public_id}`, pinned: !!p.pinned_at,
                 footer: responses ? regularPostFooter(p, name, { counts: responses.counts[p.id], thread: responses.threads[p.id], readOnly: !connected }) : null,
               }))
             : h('p', { class: 'muted' }, 'No updates yet.'))
