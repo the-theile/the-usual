@@ -6,6 +6,7 @@ import { fmtShift, timeAgo } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { signOut } from '../bartender/home.js';
 import { loadRegularResponses, regularPostFooter } from '../responses.js';
+import { installTipCard, installMenuRow } from '../../lib/install.js';
 
 const NUDGE_KEY = 'usual.profileNudgeDismissed';
 
@@ -98,6 +99,9 @@ export async function regularHomeView() {
 
     nudge,
 
+    // Only once they follow someone, and not on top of the profile nudge.
+    bartenders.length && !nudge ? installTipCard() : null,
+
     bartenders.length ? h('a', { class: 'btn btn-secondary', href: '#/code' }, '＋ Add a bartender') : null,
 
     bartenders.length
@@ -116,6 +120,7 @@ export async function regularHomeView() {
 
     h('nav', { class: 'menu', 'aria-label': 'More' },
       h('a', { class: 'menu-row', href: '#/me' }, 'My profile', h('span', { 'aria-hidden': 'true' }, '›')),
+      installMenuRow(),
       me.bartender
         ? h('button', { type: 'button', class: 'menu-row', onClick: () => { setMode('bartender'); navigate('/'); } },
             'Go to my bartender screen', h('span', { 'aria-hidden': 'true' }, '›'))

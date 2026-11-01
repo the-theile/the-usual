@@ -8,6 +8,7 @@ import { toast, oops } from '../../lib/toast.js';
 import { loadMyPostActivity, activityLink } from '../responses.js';
 import { loadMyRegulars } from './regulars.js';
 import { avatar } from '../regular/home.js';
+import { installTipCard, installMenuRow } from '../../lib/install.js';
 
 export async function bartenderHomeView() {
   const b = me.bartender;
@@ -62,11 +63,14 @@ export async function bartenderHomeView() {
         )
       : null,
 
+    installTipCard(),
+
     h('nav', { class: 'menu', 'aria-label': 'More' },
       h('a', { class: 'menu-row', href: '#/schedule' }, 'My schedule', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: '#/regulars' }, 'My regulars', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: '#/profile' }, 'My profile & bars', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: `#/b/${b.public_id}` }, 'See my page as regulars do', h('span', { 'aria-hidden': 'true' }, '›')),
+      installMenuRow(),
       h('button', {
         type: 'button', class: 'menu-row',
         onClick: () => { setMode('regular'); navigate('/'); },
