@@ -1,6 +1,6 @@
 import { h, screen, clear, actionButton } from '../lib/dom.js';
 import { supabase } from '../supabase.js';
-import { me, uid, loadMe, getPendingInvite, setMode } from '../state.js';
+import { me, uid, loadMe, getPendingInvite, getReturnTo, setReturnTo, setMode } from '../state.js';
 import { navigate } from '../router.js';
 import { oops } from '../lib/toast.js';
 import { localTimezone } from '../lib/time.js';
@@ -43,6 +43,12 @@ export async function onboardingView() {
       await loadMe();
       if (pending) {
         navigate(`/join?t=${encodeURIComponent(pending)}`, { replace: true });
+      } else if (getReturnTo()) {
+        // Signed up from a bartender's public page: take them straight back as a regular.
+        const to = getReturnTo();
+        setReturnTo(null);
+        setMode('regular');
+        navigate(to, { replace: true });
       } else {
         stepRole();
       }

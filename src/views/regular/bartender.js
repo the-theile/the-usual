@@ -1,7 +1,7 @@
 // #/b/:public_id — a bartender's page as a regular (or public-schedule viewer) sees it.
 import { h, screen, backLink, actionButton, confirmDialog } from '../../lib/dom.js';
 import { supabase } from '../../supabase.js';
-import { uid } from '../../state.js';
+import { me, uid, setReturnTo } from '../../state.js';
 import { navigate } from '../../router.js';
 import { barDay, addDays, dayLabel, fmtShift } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
@@ -10,6 +10,14 @@ import { avatar, postCard } from './home.js';
 import { loadRegularResponses, regularPostFooter } from '../responses.js';
 
 export async function bartenderPageView({ params }) {
+  // The route is public so signed-out visitors get a preview of public pages.
+  if (!me.session) return signedOutPageView(params.pid);
+  if (!me.profile) {
+    setReturnTo(`/b/${params.pid}`);
+    navigate('/onboarding', { replace: true });
+    return null;
+  }
+
   // RLS returns nothing if this person can't see the bartender (not connected and
   // not public, or blocked). Same message either way.
   const { data: b } = await supabase.from('bartenders')
@@ -111,5 +119,74 @@ export async function bartenderPageView({ params }) {
           navigate('/', { replace: true });
         }, { class: 'btn btn-ghost' })
       : null,
+  );
+}
+
+// Signed out: read-only preview of a public page (schedule + Public updates).
+// Everything comes from one function that only answers for public pages.
+async function signedOutPageView(pid) {
+  const { data: pg, error } = await supabase.rpc('public_page', { p_public_id: pid });
+  if (error) throw error;
+  const signIn = (label, cls = 'btn btn-primary') => h('a', {
+    class: cls, href: '#/signin', onClick: () => setReturnTo(`/b/${pid}`),
+  }, label);
+  if (!pg) {
+    return screen(h('h1', {}, 'Page not found'),
+      h('p', { class: 'lead' }, 'This page isn’t available. If you know this bartender, sign in and ask them for today’s code.'),
+      signIn('Sign in'),
+      h('a', { class: 'btn btn-ghost', href: '#/welcome' }, 'What is The Usual?'));
+  }
+  const name = pg.display_name || 'Bartender';
+  const today = pg.today;
+  const [avatars, photos] = await Promise.all([
+    photoUrls('avatars', [pg.photo_path]),
+    photoUrls('post-photos', pg.posts.map((p) => p.photo_path)),
+  ]);
+  const avatarUrl = avatars[pg.photo_path];
+  const tonight = pg.shifts.filter((s) => s.occurrence_date === today);
+  const later = pg.shifts.filter((s) => s.occurrence_date !== today);
+
+  return screen(
+    h('header', { class: 'profile-head' },
+      avatar(avatarUrl, name, 'avatar-xl'),
+      h('h1', {}, name),
+      pg.bio ? h('p', { class: 'lead' }, pg.bio) : null,
+    ),
+
+    h('section', { class: 'card tonight', 'aria-labelledby': 'tonight-h' },
+      h('p', { class: 'eyebrow', id: 'tonight-h' }, 'Tonight'),
+      tonight.length
+        ? tonight.map((s) => h('p', { class: 'shift-line' }, h('strong', {}, s.bar_name), ' · ', fmtShift(s.start_time, s.end_time),
+            s.note ? h('span', { class: 'help block' }, s.note) : null))
+        : h('p', { class: 'shift-line muted' }, 'Off tonight'),
+    ),
+
+    h('section', { 'aria-labelledby': 'coming-h' },
+      h('h2', { id: 'coming-h' }, 'Coming up'),
+      later.length
+        ? h('ul', { class: 'plain-list schedule-list' }, later.map((s) => h('li', {},
+            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today)),
+            h('span', {}, h('strong', {}, s.bar_name), ' · ', fmtShift(s.start_time, s.end_time),
+              s.note ? h('span', { class: 'help block' }, s.note) : null))))
+        : h('p', { class: 'muted' }, 'No shifts posted for the next two weeks.'),
+    ),
+
+    pg.bars.length
+      ? h('section', { 'aria-labelledby': 'bars-h' },
+          h('h2', { id: 'bars-h' }, `Where to find ${name}`),
+          h('ul', { class: 'plain-list' }, pg.bars.map((x) => h('li', { class: 'bar-item' },
+            h('strong', {}, x.name), x.area ? h('span', { class: 'help' }, ` · ${x.area}`) : null))))
+      : null,
+
+    pg.posts.length
+      ? h('section', { 'aria-labelledby': 'posts-h' },
+          h('h2', { id: 'posts-h' }, 'Updates'),
+          pg.posts.map((p) => postCard(p, { name, avatarUrl, photo: photos[p.photo_path], href: `#/b/${pid}` })))
+      : null,
+
+    h('div', { class: 'card note stack' },
+      h('p', {}, `Regulars see all of ${name}’s updates, and can react and reply. Sign in, then ask ${name} for today’s code to follow.`),
+      signIn('Sign in to follow'),
+      h('a', { class: 'btn btn-ghost', href: '#/welcome' }, 'What is The Usual?')),
   );
 }

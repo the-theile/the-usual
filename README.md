@@ -66,7 +66,7 @@ The QR codes and invite links use the site's own address, so they work on whatev
 
 Paste `supabase/tests/privacy_test.sql` into the Supabase **SQL editor** and run it. It creates throwaway test users, checks 74 privacy rules and then **rolls everything back**. It should end without a `FAIL:` error.
 
-Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) and `supabase/tests/delete_account_test.sql` (account deletion).
+Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) `supabase/tests/delete_account_test.sql` (account deletion) and `supabase/tests/public_page_test.sql` (34 checks for what signed-out visitors can see on a public page).
 
 ## Security notes
 

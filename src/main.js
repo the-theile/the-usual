@@ -34,7 +34,7 @@ route('/onboarding', onboardingView, { noProfile: true, title: 'Welcome' });
 route('/become-bartender', becomeBartenderView, { title: 'Set up your bartender page' });
 route('/code', enterCodeView, { title: 'Add a bartender' });
 route('/me', regularProfileView, { title: 'My profile' });
-route('/b/:pid', bartenderPageView, { title: 'Bartender' });
+route('/b/:pid', bartenderPageView, { public: true, title: 'Bartender' }); // signed out: public preview
 route('/p/:id', regularThreadView, { title: 'Update' });
 route('/post', postView, { ...B, title: 'Post an update' });
 route('/invite', inviteView, { ...B, title: 'Invite a regular' });
