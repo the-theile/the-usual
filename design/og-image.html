@@ -1,0 +1,42 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1200px;height:630px;overflow:hidden}
+body{position:relative;font-family:Inter,sans-serif;color:#f8ecd9;
+ background:
+  radial-gradient(ellipse 620px 460px at 900px 120px, rgba(245,176,65,.30), transparent 70%),
+  radial-gradient(ellipse 900px 500px at 200px 700px, rgba(90,61,37,.45), transparent 70%),
+  repeating-linear-gradient(92deg, rgba(255,255,255,.012) 0 3px, transparent 3px 11px),
+  #1c120b;}
+.bar{position:absolute;left:0;right:0;bottom:0;height:14px;background:linear-gradient(90deg,#5a3d25,#f5b041 50%,#5a3d25)}
+.left{position:absolute;left:84px;top:0;bottom:14px;width:600px;display:flex;flex-direction:column;justify-content:center}
+.brand{display:flex;align-items:center;gap:22px;margin-bottom:34px}
+.brand img{width:84px;height:84px}
+.brand span{font-family:"Bitstream Charter",serif;font-weight:700;font-size:44px;color:#ffc861;letter-spacing:.5px}
+h1{font-family:"Bitstream Charter",serif;font-weight:700;font-size:68px;line-height:1.08;letter-spacing:-.5px}
+h1 em{font-style:italic;color:#f5b041}
+p{margin-top:28px;font-size:27px;line-height:1.4;color:#dcc6a6;max-width:540px}
+.card{position:absolute;right:80px;top:118px;width:400px;background:#2a1b11;border:2px solid #5a3d25;border-radius:28px;padding:30px 30px 26px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px rgba(245,176,65,.06)}
+.tag{display:inline-block;background:#f5b041;color:#1c120b;font-weight:800;font-size:17px;letter-spacing:2px;text-transform:uppercase;padding:7px 14px;border-radius:999px}
+.who{display:flex;align-items:center;gap:18px;margin-top:24px}
+.av{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#ffc861,#b9772a);display:grid;place-items:center;font-family:"Bitstream Charter",serif;font-weight:700;font-size:32px;color:#1c120b}
+.name{font-family:"Bitstream Charter",serif;font-weight:700;font-size:32px}
+.at{font-size:21px;color:#dcc6a6;margin-top:2px}
+.row{margin-top:24px;padding-top:20px;border-top:2px dashed #5a3d25;display:flex;justify-content:space-between;font-size:22px}
+.row b{color:#ffc861}
+.post{margin-top:18px;background:#3a2618;border-radius:16px;padding:16px 18px;font-size:20px;line-height:1.4;color:#f8ecd9}
+.rx{margin-top:12px;font-size:19px;color:#dcc6a6}
+</style></head><body>
+<div class="left">
+  <div class="brand"><img src="../public/icon.svg"><span>The Usual</span></div>
+  <h1>Know where your bartender is working <em>tonight.</em></h1>
+  <p>Follow the folks who pour your drink.<br>No phone numbers, no socials.</p>
+</div>
+<div class="card">
+  <span class="tag">● Working tonight</span>
+  <div class="who"><div class="av">M</div><div><div class="name">Maya</div><div class="at">at The Copper Lantern</div></div></div>
+  <div class="row"><span>Behind the bar</span><b>8pm – close</b></div>
+  <div class="post">New fall menu is out. Come try the smoked maple old fashioned 🥃</div>
+  <div class="rx">🍻 12 &nbsp; ❤️ 8 &nbsp; 🔥 5</div>
+</div>
+<div class="bar"></div>
+</body></html>
