@@ -70,6 +70,7 @@ export async function bartenderHomeView() {
       h('a', { class: 'menu-row', href: '#/regulars' }, 'My regulars', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: '#/profile' }, 'My bartender profile & bars', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: `#/b/${b.public_id}` }, 'See my page as regulars do', h('span', { 'aria-hidden': 'true' }, '›')),
+      me.moderator ? h('a', { class: 'menu-row', href: '#/mod' }, 'Moderator tools', h('span', { 'aria-hidden': 'true' }, '›')) : null,
       installMenuRow(),
       h('button', {
         type: 'button', class: 'menu-row',

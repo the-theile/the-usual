@@ -1,12 +1,13 @@
 import { h, screen } from '../../lib/dom.js';
 import { supabase } from '../../supabase.js';
-import { me, setMode } from '../../state.js';
+import { me, uid, setMode } from '../../state.js';
 import { navigate } from '../../router.js';
 import { fmtShift, timeAgo } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { signOut } from '../bartender/home.js';
 import { loadRegularResponses, regularPostFooter } from '../responses.js';
 import { installTipCard, installMenuRow } from '../../lib/install.js';
+import { reportButton } from '../../lib/report.js';
 
 const NUDGE_KEY = 'usual.profileNudgeDismissed';
 
@@ -24,6 +25,8 @@ export function postCard(p, { name, avatarUrl, photo, href, footer }) {
     photo ? h('img', { class: 'post-photo', src: photo, alt: `Photo from ${name}`, loading: 'lazy' }) : null,
     p.body ? h('p', { class: 'post-body' }, p.body) : null,
     footer || null,
+    // Anyone but the author can report a post they can see.
+    p.bartender_id !== uid() ? h('div', { class: 'post-report' }, reportButton('post', p.id, name)) : null,
   );
 }
 
@@ -125,6 +128,7 @@ export async function regularHomeView() {
         ? h('button', { type: 'button', class: 'menu-row', onClick: () => { setMode('bartender'); navigate('/'); } },
             'Switch to my bartender side', h('span', { 'aria-hidden': 'true' }, '›'))
         : h('a', { class: 'menu-row', href: '#/become-bartender' }, 'Are you a bartender? Set up your page', h('span', { 'aria-hidden': 'true' }, '›')),
+      me.moderator ? h('a', { class: 'menu-row', href: '#/mod' }, 'Moderator tools', h('span', { 'aria-hidden': 'true' }, '›')) : null,
       h('button', { type: 'button', class: 'menu-row', onClick: signOut }, 'Sign out', h('span', { 'aria-hidden': 'true' }, '›')),
     ),
   );

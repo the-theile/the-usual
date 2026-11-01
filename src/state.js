@@ -5,6 +5,7 @@ export const me = {
   session: null,
   profile: null,     // { id, display_name }
   bartender: null,   // { id, public_id, handle, bio, photo_path, timezone, schedule_visibility } or null
+  moderator: false,  // listed in private.moderators; only unlocks the #/mod screens (the database checks too)
 };
 
 export const uid = () => me.session?.user?.id ?? null;
@@ -14,12 +15,15 @@ export async function loadMe() {
   me.session = data.session;
   me.profile = null;
   me.bartender = null;
+  me.moderator = false;
   if (!me.session) return me;
   const id = me.session.user.id;
-  const [p, b] = await Promise.all([
+  const [p, b, m] = await Promise.all([
     supabase.from('profiles').select('id, display_name').eq('id', id).maybeSingle(),
     supabase.from('bartenders').select('id, public_id, handle, handle_changed_at, bio, photo_path, timezone, schedule_visibility').eq('id', id).maybeSingle(),
+    supabase.rpc('am_i_moderator'),
   ]);
+  me.moderator = m.data === true;
   me.profile = p.data ?? null;
   me.bartender = b.data ?? null;
   return me;
