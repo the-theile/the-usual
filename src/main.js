@@ -3,7 +3,7 @@ import './styles/base.css';
 import './styles/components.css';
 
 import { supabase } from './supabase.js';
-import { me, loadMe, getMode } from './state.js';
+import { me, loadMe, getMode, setReturnTo } from './state.js';
 import { route, match, parseHash, navigate } from './router.js';
 import { h, screen } from './lib/dom.js';
 import { initInstall } from './lib/install.js';
@@ -62,8 +62,10 @@ async function render() {
   const r = match(path) || match('/');
   const signedIn = !!me.session;
 
-  if (!r.opts.public && !signedIn) return navigate('/welcome', { replace: true });
-  if (signedIn && !me.profile && !r.opts.public && !r.opts.noProfile) return navigate('/onboarding', { replace: true });
+  // Remember a real destination (not home) so sign-in / onboarding can return to it.
+  const remember = () => { if (match(path) && path !== '/') setReturnTo(location.hash.slice(1)); };
+  if (!r.opts.public && !signedIn) { remember(); return navigate('/welcome', { replace: true }); }
+  if (signedIn && !me.profile && !r.opts.public && !r.opts.noProfile) { remember(); return navigate('/onboarding', { replace: true }); }
   if (signedIn && me.profile && (path === '/welcome' || path === '/signin' || path === '/onboarding')) {
     return navigate('/', { replace: true });
   }

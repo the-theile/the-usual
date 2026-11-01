@@ -1,5 +1,5 @@
 import { h, screen } from '../lib/dom.js';
-import { getPendingInvite } from '../state.js';
+import { getPendingInvite, peekReturnTo } from '../state.js';
 
 export function logo() {
   return h('div', { class: 'logo', 'aria-hidden': 'true' },
@@ -8,6 +8,7 @@ export function logo() {
 
 export async function welcomeView() {
   const pending = getPendingInvite();
+  const toPage = !pending && /^\/(b|tender)\//.test(peekReturnTo() || '');
   return screen(
     h('div', { class: 'hero' },
       logo(),
@@ -15,6 +16,7 @@ export async function welcomeView() {
       h('p', { class: 'lead' }, 'Know where your favourite bartender is working tonight.'),
     ),
     pending ? h('p', { class: 'card note' }, 'You have an invite waiting. Sign in to accept it.') : null,
+    toPage ? h('p', { class: 'card note' }, 'Sign in to see this bartender’s page. We’ll take you straight there.') : null,
     h('a', { class: 'btn btn-primary btn-xl', href: '#/signin', 'data-autofocus': '' }, 'Get started'),
     h('ul', { class: 'plain-list reassure' },
       h('li', {}, 'Nothing to download.'),

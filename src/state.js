@@ -45,3 +45,26 @@ export function setPendingInvite(token) {
     else { sessionStorage.removeItem(PENDING_KEY); localStorage.removeItem(PENDING_KEY); }
   } catch { /* ignore */ }
 }
+
+// Where a signed-out visitor was headed (e.g. a bartender's /tender/<handle> link),
+// so sign-in and onboarding can take them there. Expires after an hour so a stale
+// one never hijacks a later sign-in. Read once: takeReturnTo() clears it.
+const RETURN_KEY = 'usual.returnTo';
+const RETURN_TTL_MS = 60 * 60 * 1000;
+export function setReturnTo(path) {
+  try {
+    const v = JSON.stringify({ path, at: Date.now() });
+    sessionStorage.setItem(RETURN_KEY, v); localStorage.setItem(RETURN_KEY, v);
+  } catch { /* private mode */ }
+}
+export function peekReturnTo() {
+  try {
+    const { path, at } = JSON.parse(sessionStorage.getItem(RETURN_KEY) || localStorage.getItem(RETURN_KEY) || 'null') || {};
+    return typeof path === 'string' && path.startsWith('/') && Date.now() - at < RETURN_TTL_MS ? path : null;
+  } catch { return null; }
+}
+export function takeReturnTo() {
+  const path = peekReturnTo();
+  try { sessionStorage.removeItem(RETURN_KEY); localStorage.removeItem(RETURN_KEY); } catch { /* ignore */ }
+  return path;
+}
