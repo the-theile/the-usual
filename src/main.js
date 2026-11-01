@@ -23,6 +23,7 @@ import { enterCodeView } from './views/regular/enter-code.js';
 import { bartenderPageView, tenderPageView } from './views/regular/bartender.js';
 import { regularProfileView } from './views/regular/me.js';
 import { regularThreadView, bartenderResponsesView } from './views/responses.js';
+import { modReportsView, modMetricsView } from './views/mod.js';
 
 // ===== Routes =====
 // title: fixed screen name for the browser tab/history. Never put names or other personal data in it.
@@ -50,6 +51,8 @@ route('/profile', profileView, { ...B, title: 'My bartender profile & bars' });
 route('/regulars', regularsView, { ...B, title: 'My regulars' });
 route('/regulars/:id', regularDetailView, { ...B, title: 'Regular' });
 route('/responses/:id', bartenderResponsesView, { ...B, title: 'Reactions & replies' });
+route('/mod', modReportsView, { mod: true, title: 'Moderator tools' });
+route('/mod/metrics', modMetricsView, { mod: true, title: 'Metrics' });
 
 // ===== Rendering =====
 const app = document.getElementById('app');
@@ -70,6 +73,7 @@ async function render() {
     return navigate('/', { replace: true });
   }
   if (r.opts.bartender && !me.bartender) return navigate('/', { replace: true });
+  if (r.opts.mod && !me.moderator) return navigate('/', { replace: true });
 
   let node;
   try {

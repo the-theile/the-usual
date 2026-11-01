@@ -8,6 +8,7 @@ import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { avatar, postCard } from './home.js';
 import { loadRegularResponses, regularPostFooter } from '../responses.js';
+import { reportButton } from '../../lib/report.js';
 
 // Same message whether the page doesn't exist or this person can't see it.
 function pageNotFound() {
@@ -125,5 +126,6 @@ export async function bartenderPageView({ params }) {
           navigate('/', { replace: true });
         }, { class: 'btn btn-ghost' })
       : null,
+    isMe ? null : reportButton('person', b.id, name, { label: `Report ${name}`, className: 'btn btn-ghost' }),
   );
 }

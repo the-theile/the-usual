@@ -10,6 +10,7 @@ import { timeAgo } from '../lib/time.js';
 import { photoUrls } from '../lib/images.js';
 import { toast, oops } from '../lib/toast.js';
 import { avatar, postCard } from './regular/home.js';
+import { reportButton } from '../lib/report.js';
 
 export const REACTIONS = [
   { key: 'cheers', emoji: '🍻', label: 'Cheers' },
@@ -131,7 +132,8 @@ function messageItem(m, { mine, authorName, open, onDeleted }) {
           li.remove();
           onDeleted?.();
           toast('Message deleted');
-        }, { class: 'btn btn-small btn-ghost' })) : null,
+        }, { class: 'btn btn-small btn-ghost' }))
+        : h('div', { class: 'msg-actions' }, reportButton('reply', m.id, authorName)),
     ]);
   }
 

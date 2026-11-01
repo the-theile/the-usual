@@ -18,6 +18,11 @@ A mobile-first web app built with plain JavaScript and Vite, with Supabase for s
 - **For bartenders:** My regulars shows each regular's photo and usual. Tapping a regular opens their page, where the bartender can keep a **private note** (only that bartender ever sees it). Their home shows **birthdays this week**, and the reactions & replies screen shows faces and usual drinks.
 - **Delete my account:** at the bottom of My profile (or My bartender profile & bars for bartenders). It removes the person's photos, then everything else they added, and signs them out. It can't be undone.
 - **Silent blocking,** enforced in the database (RLS): the blocked person loses posts, schedule, profile and photos, and codes and links stop working for them. They are never told.
+- **Reporting:** a **Report** button on every update (except your own), on the other person's reply messages, on a bartender's page and on a bartender's regular page (which then offers to block them too). The reporter picks a reason and can add details. The reported person is never told. A report keeps a copy of the text and photo, so the evidence survives if the author deletes it. Max 20 reports a day per person.
+- **Moderator tools** (`#/mod`, shown in the home menu to moderators only):
+  - **Reports:** a queue of open reports, oldest first, with who was reported (and how many reports they have), who reported, the reason and the copied content. A moderator can **remove** the post or reply, **suspend** the person (1, 7 or 30 days, or until lifted), both, or **dismiss**. Suspending signs them out and blocks sign-in. Removing a post closes the other open reports about it.
+  - **Suspended** people, with Unsuspend, and a log of every moderator action.
+  - **Metrics** (`#/mod/metrics`): people, weekly active, bartender funnel (page → shift → first regular → posting → 5+ regulars), regulars per bartender, how regulars join (QR / spoken code / link), updates and response rate, safety (reports, blocks, suspensions), and a 14-day chart. Aggregates only.
 
 ## Project layout
 
@@ -62,11 +67,22 @@ npm run build      # production build in dist/
 
 The QR codes and invite links use the site's own address, so they work on whatever domain Vercel gives you.
 
-### 3. Run the privacy tests on the live database (optional, recommended)
+### 3. Make yourself a moderator
+
+Moderators are listed in `private.moderators`, which the API can't reach. In the Supabase **SQL editor**, after signing in to the app once:
+
+```sql
+insert into private.moderators (user_id)
+select id from auth.users where phone = '15551234567';   -- your number, digits only, with country code
+```
+
+Sign out and back in (or reload) and **Moderator tools** appears in the home menu. To remove a moderator, `delete from private.moderators where user_id = '…';`.
+
+### 4. Run the privacy tests on the live database (optional, recommended)
 
 Paste `supabase/tests/privacy_test.sql` into the Supabase **SQL editor** and run it. It creates throwaway test users, checks 74 privacy rules and then **rolls everything back**. It should end without a `FAIL:` error.
 
-Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) and `supabase/tests/delete_account_test.sql` (account deletion).
+Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) `supabase/tests/delete_account_test.sql` (account deletion) and `supabase/tests/moderation_test.sql` (47 checks for reports, moderator tools and metrics).
 
 ## Security notes
 
@@ -76,12 +92,13 @@ Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactio
 - QR codes and links use 122-bit random tokens.
 - A regular's photo, usual and birthday live in `regular_details`, not `profiles`, because `profiles` rows are also readable by a bartender's regulars.
 - Photos are in private buckets, served by short-lived signed URLs under the same rules as the posts and profiles they belong to.
+- Reports, suspensions, the moderator list and the action log live in the `private` schema. Clients only reach them through `SECURITY DEFINER` functions, and every `mod_*` function checks `private.is_moderator()` first. `am_i_moderator()` only ever answers about the caller.
+- A suspension sets `auth.users.banned_until` and deletes the person's sessions. An access token already issued keeps working until it expires (up to an hour).
 
 ## Planned later (the schema is ready)
 
 - **Direct messages:** `connections.messaging_enabled`. The bartender turns messaging on per regular.
 - **Notification bell:** `connections.notify`, plus a `push_subscriptions` table.
-- **Report button:** a new `reports` table.
 - **Paid promotion:** a shared `venues` table and promoted posts.
 
 New tables in `public` automatically get Supabase's default grants. Always add `revoke`/`grant` and RLS policies in the same migration, following the pattern in `20261031000003_rls.sql`.
