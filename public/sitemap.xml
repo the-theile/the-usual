@@ -3,4 +3,10 @@
   <url>
     <loc>https://gettheusual.bar/</loc>
   </url>
+  <url>
+    <loc>https://gettheusual.bar/privacy</loc>
+  </url>
+  <url>
+    <loc>https://gettheusual.bar/terms</loc>
+  </url>
 </urlset>

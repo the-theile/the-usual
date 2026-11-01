@@ -61,5 +61,8 @@ export function deleteAccountSection() {
       toast('Your account has been deleted');
       await supabase.auth.signOut({ scope: 'local' }); // SIGNED_OUT → welcome screen (main.js)
     }, { class: 'btn btn-danger-outline' }),
+    h('p', { class: 'help legal-links' },
+      h('a', { href: '/privacy' }, 'Privacy Policy'), ' · ', h('a', { href: '/terms' }, 'Terms'), ' · ',
+      h('a', { href: 'mailto:cheers@gettheusual.bar' }, 'cheers@gettheusual.bar')),
   );
 }
