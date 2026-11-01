@@ -1,4 +1,4 @@
-import { h, screen, backLink } from '../../lib/dom.js';
+import { h, screen, backLink, confirmDialog } from '../../lib/dom.js';
 import { supabase } from '../../supabase.js';
 import { me, uid } from '../../state.js';
 import { navigate } from '../../router.js';
@@ -53,15 +53,44 @@ export async function postView() {
 
   const visOption = (value, title, desc) => h('label', { class: 'choice' },
     h('input', { type: 'radio', name: 'vis', value, checked: value === 'regulars' }),
-    h('span', {}, h('strong', {}, title), h('span', { class: 'help' }, desc)));
-  const scheduleIsPublic = me.bartender.schedule_visibility === 'public';
+    h('span', {}, h('strong', {}, title), desc));
+  const pageUrl = `${location.origin}/#/b/${me.bartender.public_id}`;
+  const publicDesc = h('span', { class: 'help' });
+  const renderPublicDesc = () => {
+    if (me.bartender.schedule_visibility !== 'public') {
+      publicDesc.replaceChildren('Anyone with your page link. Choosing this makes your page public.');
+      return;
+    }
+    publicDesc.replaceChildren('Anyone with your page link can see it. ',
+      h('button', { type: 'button', class: 'btn btn-ghost btn-small', onClick: async (e) => {
+        e.preventDefault();
+        try { await navigator.clipboard.writeText(pageUrl); toast('Link copied'); }
+        catch { publicDesc.append(h('input', { type: 'text', readonly: true, value: pageUrl, 'aria-label': 'Page link' })); }
+      } }, 'Copy my page link'));
+  };
+  renderPublicDesc();
   const visibility = h('fieldset', { class: 'card' },
     h('legend', {}, 'Who can see this update?'),
-    visOption('regulars', 'Only my regulars', 'People who joined with your code or link.'),
-    visOption('public', 'Public', scheduleIsPublic
-      ? 'Also shown on your page to anyone signed in with your link.'
-      : 'Shown on your page to anyone signed in with your link, once your schedule is set to “Anyone with my link”.'),
+    visOption('regulars', 'Only my regulars', h('span', { class: 'help' }, 'People who joined with your code or link.')),
+    visOption('public', 'Public', publicDesc),
   );
+
+  // Picking Public while the page is private: offer to make the page public right here.
+  visibility.querySelector('input[value=public]').addEventListener('change', async () => {
+    if (me.bartender.schedule_visibility === 'public') return;
+    const ok = await confirmDialog({
+      title: 'Make your page public?',
+      body: 'Anyone with your page link will see your schedule and the updates you mark Public. Replies and reactions stay regulars-only. You can change this anytime in My schedule.',
+      confirmText: 'Make it public', cancelText: 'Keep it private',
+    });
+    const revert = () => { visibility.querySelector('input[value=regulars]').checked = true; };
+    if (!ok) return revert();
+    const { error } = await supabase.from('bartenders').update({ schedule_visibility: 'public' }).eq('id', me.bartender.id);
+    if (error) { revert(); return oops(error); }
+    me.bartender.schedule_visibility = 'public';
+    toast('Your page is now public');
+    renderPublicDesc();
+  });
 
   const submit = h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Post');
   const form = h('form', { class: 'stack', novalidate: true },
