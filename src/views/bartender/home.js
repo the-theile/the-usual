@@ -68,13 +68,13 @@ export async function bartenderHomeView() {
     h('nav', { class: 'menu', 'aria-label': 'More' },
       h('a', { class: 'menu-row', href: '#/schedule' }, 'My schedule', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: '#/regulars' }, 'My regulars', h('span', { 'aria-hidden': 'true' }, '›')),
-      h('a', { class: 'menu-row', href: '#/profile' }, 'My profile & bars', h('span', { 'aria-hidden': 'true' }, '›')),
+      h('a', { class: 'menu-row', href: '#/profile' }, 'My bartender profile & bars', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: `#/b/${b.public_id}` }, 'See my page as regulars do', h('span', { 'aria-hidden': 'true' }, '›')),
       installMenuRow(),
       h('button', {
         type: 'button', class: 'menu-row',
         onClick: () => { setMode('regular'); navigate('/'); },
-      }, 'Bartenders I follow', h('span', { 'aria-hidden': 'true' }, '›')),
+      }, 'Switch to my regular side', h('span', { 'aria-hidden': 'true' }, '›')),
     ),
 
     h('section', { 'aria-labelledby': 'my-posts' },

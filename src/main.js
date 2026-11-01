@@ -45,7 +45,7 @@ route('/schedule/weekly/:id', weeklyFormView, { ...B, title: 'Weekly shift' });
 route('/schedule/once/new', onceFormView, { ...B, title: 'One-off shift' });
 route('/schedule/once/:id', onceFormView, { ...B, title: 'One-off shift' });
 route('/schedule/night/:patternId/:date', nightFormView, { ...B, title: 'Change a night' });
-route('/profile', profileView, { ...B, title: 'My profile & bars' });
+route('/profile', profileView, { ...B, title: 'My bartender profile & bars' });
 route('/regulars', regularsView, { ...B, title: 'My regulars' });
 route('/regulars/:id', regularDetailView, { ...B, title: 'Regular' });
 route('/responses/:id', bartenderResponsesView, { ...B, title: 'Reactions & replies' });
