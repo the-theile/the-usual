@@ -64,7 +64,7 @@ export async function postView() {
   );
 
   const submit = h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Post');
-  const form = h('form', { class: 'stack', novalidate: true },
+  const form = h('form', { class: 'stack', noValidate: true },
     h('label', { for: 'body' }, 'What’s happening?'),
     text, counter,
     file, photoBtn, preview,

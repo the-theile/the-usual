@@ -18,7 +18,7 @@ export async function enterCodeView() {
   });
   const err = h('p', { class: 'error', role: 'alert' });
   const submit = h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Connect');
-  const form = h('form', { class: 'stack', novalidate: true },
+  const form = h('form', { class: 'stack', noValidate: true },
     h('label', { for: 'code' }, 'Type the code your bartender gave you'),
     input,
     h('p', { id: 'code-help', class: 'help' }, 'Two words and a number. Capitals and dashes don’t matter.'),

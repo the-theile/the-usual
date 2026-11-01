@@ -94,7 +94,7 @@ export async function regularProfileView() {
   month.addEventListener('change', () => fillDays(day.value));
 
   const err = h('p', { class: 'error', role: 'alert' });
-  const form = h('form', { class: 'stack', novalidate: true },
+  const form = h('form', { class: 'stack', noValidate: true },
     h('div', { class: 'stack-tight' }, h('label', { for: 'name' }, 'Your name'), name),
     h('div', { class: 'stack-tight' }, h('label', { for: 'usual' }, 'My usual (optional)'), usual,
       h('p', { id: 'usual-help', class: 'help' }, 'Your go-to drink, so your bartender can have it ready.')),

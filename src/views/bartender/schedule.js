@@ -247,7 +247,7 @@ export async function weeklyFormView({ params }) {
   const note = noteField(p?.note);
   const err = h('p', { class: 'error', role: 'alert' });
 
-  const form = h('form', { class: 'stack', novalidate: true },
+  const form = h('form', { class: 'stack', noValidate: true },
     barPicker(bars, p?.bar_id),
     h('fieldset', {}, h('legend', {}, 'Which days?'), h('div', { class: 'day-grid' }, dayBoxes)),
     times.node, note.node, err,
@@ -307,7 +307,7 @@ export async function onceFormView({ params }) {
   const note = noteField(s?.note);
   const err = h('p', { class: 'error', role: 'alert' });
 
-  const form = h('form', { class: 'stack', novalidate: true },
+  const form = h('form', { class: 'stack', noValidate: true },
     barPicker(bars, s?.bar_id),
     h('div', { class: 'stack-tight' }, h('label', { for: 'date' }, 'Which day?'), date),
     times.node, note.node, err,
@@ -319,6 +319,7 @@ export async function onceFormView({ params }) {
     const t = times.read();
     if (!bar_id) { err.textContent = 'Pick a bar.'; return; }
     if (!date.value) { err.textContent = 'Pick a day.'; return; }
+    if (date.value < today) { err.textContent = 'Pick today or a later day.'; date.focus(); return; }   // was the browser's min= check
     if (!t.start_time) { err.textContent = 'Pick a start time.'; return; }
     const row = { bar_id, shift_date: date.value, ...t, note: note.read() };
     const res = s
@@ -353,7 +354,7 @@ export async function nightFormView({ params }) {
   const err = h('p', { class: 'error', role: 'alert' });
   const today = barDay(me.bartender.timezone);
 
-  const form = h('form', { class: 'stack', novalidate: true },
+  const form = h('form', { class: 'stack', noValidate: true },
     barPicker(bars, cur.bar_id),
     times.node, note.node, err,
     h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Save this night'),

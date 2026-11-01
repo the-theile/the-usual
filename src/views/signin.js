@@ -34,7 +34,7 @@ export async function signinView() {
       'aria-describedby': 'phone-help',
     });
     const err = h('p', { class: 'error', role: 'alert' }, errorText || '');
-    const form = h('form', { class: 'stack', novalidate: true },
+    const form = h('form', { class: 'stack', noValidate: true },
       h('label', { for: 'phone' }, 'Your mobile number'),
       input,
       h('p', { id: 'phone-help', class: 'help' },
@@ -76,7 +76,7 @@ export async function signinView() {
     });
     const err = h('p', { class: 'error', role: 'alert' });
     const submit = h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Sign in');
-    const form = h('form', { class: 'stack', novalidate: true },
+    const form = h('form', { class: 'stack', noValidate: true },
       h('label', { for: 'otp' }, 'Enter the 6-digit code'),
       h('p', { id: 'otp-help', class: 'help' }, `We texted it to ${maskPhone(phone)}.`),
       input, err, submit,
