@@ -8,6 +8,7 @@ import { compressImage, uploadPhoto, photoUrl } from '../../lib/images.js';
 import { MONTHS, daysInMonth } from '../../lib/time.js';
 import { toast, oops } from '../../lib/toast.js';
 import { avatar } from './home.js';
+import { deleteAccountSection } from '../account.js';
 
 const BUCKET = 'regular-photos';
 
@@ -132,5 +133,6 @@ export async function regularProfileView() {
     h('section', { class: 'center stack' }, photoBox, file, photoLabel, removeBtn),
     form,
     h('p', { class: 'help' }, 'Only bartenders you follow can see your photo, usual and birthday. Other regulars never do.'),
+    me.bartender ? null : deleteAccountSection(), // bartenders delete from My profile & bars
   );
 }
