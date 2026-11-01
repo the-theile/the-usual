@@ -15,6 +15,11 @@ export function avatar(url, name, size = '') {
     : h('span', { class: `avatar avatar-initial ${size}`, 'aria-hidden': 'true' }, (name || '?').trim().charAt(0).toUpperCase());
 }
 
+// "3 others are coming" (never who). Migration 0012.
+export function othersComing(n) {
+  return n ? `${n} other${n === 1 ? '' : 's'} ${n === 1 ? 'is' : 'are'} coming` : '';
+}
+
 export function postCard(p, { name, avatarUrl, photo, href, footer, pinned = false }) {
   return h('article', { class: `card post${pinned ? ' pinned' : ''}` },
     pinned ? h('p', { class: 'eyebrow' }, '📌 Pinned') : null,
@@ -45,15 +50,17 @@ export async function regularHomeView() {
         .in('bartender_id', ids).order('created_at', { ascending: false }).limit(30)
     : { data: [] };
 
-  const [avatars, photos, responses, myDetails, pinsRes] = await Promise.all([
+  const [avatars, photos, responses, myDetails, pinsRes, checkinsRes] = await Promise.all([
     photoUrls('avatars', bartenders.map((b) => b.photo_path)),
     photoUrls('post-photos', (posts || []).map((p) => p.photo_path)),
     loadRegularResponses((posts || []).map((p) => p.id)),
     ids.length ? supabase.from('regular_details').select('photo_path, usual').eq('id', me.profile.id).maybeSingle() : { data: null },
     // Each bartender's pinned update (may be older than the feed below).
     ids.length ? supabase.from('posts').select('bartender_id, body').in('bartender_id', ids).not('pinned_at', 'is', null) : { data: [] },
+    ids.length ? supabase.rpc('tonight_checkins', { p_bartenders: ids }) : { data: [] },
   ]);
   const pinOf = Object.fromEntries((pinsRes.data || []).map((p) => [p.bartender_id, p]));
+  const comingOf = Object.fromEntries((checkinsRes.data || []).map((c) => [c.bartender_id, c]));
 
   // Nudge: once they follow someone, suggest a photo + usual (until set or dismissed).
   let dismissed = false;
@@ -83,6 +90,12 @@ export async function regularHomeView() {
             h('span', { class: 'block' }, fmtShift(s.start_time, s.end_time)),
             s.note ? h('span', { class: 'help block' }, s.note) : null))
         : h('span', { class: 'bc-off' }, 'Off tonight'),
+      b.shifts.length && (comingOf[b.bartender_id]?.me || comingOf[b.bartender_id]?.others)
+        ? h('span', { class: 'bc-coming' }, [
+            comingOf[b.bartender_id].me ? '✓ You’re coming' : '',
+            othersComing(comingOf[b.bartender_id].others),
+          ].filter(Boolean).join(' · ').replace(/^./, (c) => c.toUpperCase()))
+        : null,
       pinOf[b.bartender_id]
         ? h('span', { class: 'bc-pin' }, '📌 ', pinOf[b.bartender_id].body.split('\n')[0] || 'Pinned photo')
         : null),

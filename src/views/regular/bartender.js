@@ -6,7 +6,7 @@ import { navigate } from '../../router.js';
 import { barDay, addDays, dayLabel, fmtShift } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
-import { avatar, postCard } from './home.js';
+import { avatar, postCard, othersComing } from './home.js';
 import { loadRegularResponses, regularPostFooter } from '../responses.js';
 
 export async function bartenderPageView({ params }) {
@@ -25,13 +25,14 @@ export async function bartenderPageView({ params }) {
   const today = barDay(b.timezone);
 
   const POST_COLS = 'id, bartender_id, body, photo_path, created_at, visibility, pinned_at';
-  const [barsRes, schedRes, postsRes, pinnedRes, connRes] = await Promise.all([
+  const [barsRes, schedRes, postsRes, pinnedRes, connRes, checkinRes] = await Promise.all([
     supabase.from('bars').select('id, name, area').eq('bartender_id', b.id).order('sort'),
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: addDays(today, 13) }),
     supabase.from('posts').select(POST_COLS).eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(20),
     supabase.from('posts').select(POST_COLS).eq('bartender_id', b.id).not('pinned_at', 'is', null).maybeSingle(),
     supabase.from('connections').select('bartender_id').eq('bartender_id', b.id).eq('regular_id', uid()).maybeSingle(),
+    supabase.rpc('tonight_checkins', { p_bartenders: [b.id] }), // empty unless you follow them
   ]);
   const shifts = (schedRes.data || []).filter((s) => !s.cancelled);
   // The pinned update comes first, even if it's older than the latest 20 (RLS still decides who sees it).
@@ -63,6 +64,7 @@ export async function bartenderPageView({ params }) {
         ? tonight.map((s) => h('p', { class: 'shift-line' }, h('strong', {}, s.bar_name), ' · ', fmtShift(s.start_time, s.end_time),
             s.note ? h('span', { class: 'help block' }, s.note) : null))
         : h('p', { class: 'shift-line muted' }, 'Off tonight'),
+      connected && tonight.length ? comingTonight(b, name, checkinRes.data?.[0]) : null,
     ),
 
     h('section', { 'aria-labelledby': 'coming-h' },
@@ -116,4 +118,27 @@ export async function bartenderPageView({ params }) {
         }, { class: 'btn btn-ghost' })
       : null,
   );
+}
+
+// "I'm coming tonight" + how many other regulars are (never who). Migration 0012.
+function comingTonight(b, name, row) {
+  const state = { me: !!row?.me, others: row?.others || 0 };
+  const box = h('div', { class: 'checkin stack-tight' });
+  const draw = () => box.replaceChildren(
+    state.me
+      ? h('p', { class: 'checkin-me' }, `✓ You’re coming tonight. ${name} will know.`)
+      : null,
+    state.others ? h('p', { class: 'help' }, `🍻 ${othersComing(state.others)}`) : null,
+    actionButton(state.me ? 'I can’t make it after all' : 'I’m coming tonight 🍻', async () => {
+      const coming = !state.me;
+      const { data, error } = await supabase.rpc('check_in', { p_bartender: b.id, p_coming: coming });
+      if (error) return oops(error);
+      if (data === false) return toast(`${name} isn’t working tonight any more.`, 'error');
+      state.me = coming;
+      toast(coming ? `${name} will see you’re coming` : 'Okay, maybe next time');
+      draw();
+    }, { class: state.me ? 'btn btn-ghost' : 'btn btn-primary' }),
+  );
+  draw();
+  return box;
 }
