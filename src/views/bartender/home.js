@@ -13,21 +13,30 @@ export async function bartenderHomeView() {
   const b = me.bartender;
   const today = barDay(b.timezone);
 
-  const [tonightRes, postsRes, barsRes, regulars] = await Promise.all([
+  const [tonightRes, postsRes, pinnedRes, barsRes, regulars, checkinsRes] = await Promise.all([
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: today }),
-    supabase.from('posts').select('id, body, photo_path, created_at, visibility').eq('bartender_id', b.id)
+    supabase.from('posts').select('id, body, photo_path, created_at, visibility, pinned_at').eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(10),
+    supabase.from('posts').select('id, body, photo_path, created_at, visibility, pinned_at').eq('bartender_id', b.id)
+      .not('pinned_at', 'is', null).maybeSingle(),
     supabase.from('bars').select('id').eq('bartender_id', b.id).limit(1),
     loadMyRegulars().catch((e) => { console.error(e); return []; }),
+    supabase.from('checkins').select('regular_id, created_at').eq('bartender_id', b.id).eq('bar_day', today)
+      .order('created_at'),
   ]);
   const birthdays = upcomingBirthdays(regulars.filter((r) => !r.blocked), today, 7);
+  // Regulars who said they're coming tonight (RLS: current regulars only).
+  const byId = Object.fromEntries(regulars.filter((r) => !r.blocked).map((r) => [r.regular_id, r]));
+  const coming = (checkinsRes.data || []).map((c) => byId[c.regular_id]).filter(Boolean);
   const tonight = (tonightRes.data || []).filter((s) => !s.cancelled);
-  const posts = postsRes.data || [];
+  // The pinned update comes first, even if it's older than the latest 10.
+  const pinned = pinnedRes.data;
+  const posts = pinned ? [pinned, ...(postsRes.data || []).filter((p) => p.id !== pinned.id)] : (postsRes.data || []);
   const hasBars = (barsRes.data || []).length > 0;
   const [urls, activity, faces] = await Promise.all([
     photoUrls('post-photos', posts.map((p) => p.photo_path)),
     loadMyPostActivity(posts.map((p) => p.id)),
-    photoUrls('regular-photos', birthdays.map((x) => x.person.photo_path)),
+    photoUrls('regular-photos', [...birthdays.map((x) => x.person.photo_path), ...coming.map((r) => r.photo_path)]),
   ]);
   const unread = Object.values(activity).reduce((n, a) => n + a.unread, 0);
 
@@ -52,6 +61,14 @@ export async function bartenderHomeView() {
         : h('p', { class: 'shift-line muted' }, hasBars ? "You're off tonight" : 'Add your bars and shifts'),
       h('p', { class: 'link-text' }, 'Change my schedule ›'),
     ),
+
+    coming.length
+      ? h('section', { class: 'card coming', 'aria-labelledby': 'coming-h' },
+          h('p', { class: 'eyebrow', id: 'coming-h' }, `🍻 Coming tonight · ${coming.length}`),
+          coming.map((r) => h('a', { class: 'bd-line', href: `#/regulars/${r.regular_id}` },
+            avatar(faces[r.photo_path], r.display_name, 'avatar-sm'),
+            h('span', {}, h('strong', {}, r.display_name), r.usual ? ` · ${r.usual}` : null))))
+      : null,
 
     birthdays.length
       ? h('section', { class: 'card birthdays', 'aria-labelledby': 'bd-h' },
@@ -86,11 +103,18 @@ export async function bartenderHomeView() {
 }
 
 function ownPost(p, url, activity) {
-  const card = h('article', { class: 'card post' },
+  const card = h('article', { class: `card post${p.pinned_at ? ' pinned' : ''}` },
+    p.pinned_at ? h('p', { class: 'eyebrow' }, '📌 Pinned') : null,
     url ? h('img', { class: 'post-photo', src: url, alt: 'Photo for this update', loading: 'lazy' }) : null,
     p.body ? h('p', { class: 'post-body' }, p.body) : null,
     activityLink(p, activity),
     visibilityRow(p),
+    actionButton(p.pinned_at ? 'Unpin' : '📌 Pin to top', async () => {
+      const { error } = await supabase.rpc('pin_post', { p_post: p.pinned_at ? null : p.id });
+      if (error) return oops(error);
+      toast(p.pinned_at ? 'Unpinned' : 'Pinned to the top of your page');
+      navigate('/'); // redraw so the pinned update moves to the top
+    }, { class: 'btn btn-small btn-ghost' }),
     h('div', { class: 'post-meta' },
       h('span', { class: 'muted' }, timeAgo(p.created_at)),
       actionButton('Delete', async () => {

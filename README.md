@@ -10,6 +10,8 @@ A mobile-first web app built with plain JavaScript and Vite, with Supabase for s
 - **Bartenders:** photo, name, bio, the bars they work at.
 - **Invite a regular:** a QR code, today's spoken code (e.g. `TIKI-MOON-42`, changes at 5am local time) and a copy-able link that lasts 7 days. All three connect the regular instantly.
 - **Posts:** text with an optional photo. Photos are resized and re-encoded in the browser, which also removes GPS/EXIF data. Each post is "Only my regulars" (the default) or "Public", and the bartender can switch it later. Public posts show on the bartender's page to non-regulars while the schedule is set to "Anyone with my link". Viewers must be signed in, and blocked people never see them. Non-regulars can read a public post and see its reaction counts, but only regulars can react or reply.
+- **Pinned update:** a bartender can pin one update. It stays at the top of their page, and its first line shows on their card on the regular home screen, until they pin another, unpin it or delete it. Who can see it is unchanged.
+- **I'm coming tonight:** on a night their bartender is working, a regular can tap "I'm coming tonight" (and take it back). The bartender's home lists who's coming, with faces and usual drinks. Other regulars only see a count ("3 others are coming"), never names. It resets at 5am.
 - **Schedule:** one-off shifts, weekly shifts, and changing or cancelling a single night.
 - **Schedule privacy:** "Only my regulars" or "Anyone with my link" (signed-in users only).
 - **Regular home:** who's working tonight, then recent posts.
@@ -66,7 +68,7 @@ The QR codes and invite links use the site's own address, so they work on whatev
 
 Paste `supabase/tests/privacy_test.sql` into the Supabase **SQL editor** and run it. It creates throwaway test users, checks 74 privacy rules and then **rolls everything back**. It should end without a `FAIL:` error.
 
-Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) and `supabase/tests/delete_account_test.sql` (account deletion).
+Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes), `supabase/tests/delete_account_test.sql` (account deletion), `supabase/tests/pinned_post_test.sql` (pinned updates) and `supabase/tests/checkins_test.sql` (I'm coming tonight).
 
 ## Security notes
 
