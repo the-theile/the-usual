@@ -53,6 +53,9 @@ create temp table pids (name text primary key, pid text);
 grant select on pids to authenticated, anon;
 create function pg_temp.pid(n text) returns text language sql stable as $$ select pid from pids where name = n $$;
 create function pg_temp.page(n text) returns json language sql volatile as $$ select public.public_page(pg_temp.pid(n)) $$;
+-- Only count the test users' files, so the suite also works on a project with real photos.
+create function pg_temp.test_file(name text) returns boolean language sql stable as $$
+  select split_part(name, '/', 1) in (select id::text from ids) $$;
 
 insert into auth.users (id, phone) select id, '1555500' || row_number() over () from ids;
 
@@ -148,10 +151,10 @@ end $$;
 do $$
 begin
   perform pg_temp.anon();
-  perform pg_temp.ok((select count(*) from storage.objects where bucket_id = 'avatars') = 1, 'sees one avatar');
-  perform pg_temp.ok((select name from storage.objects where bucket_id = 'avatars') = pg_temp.id('alice') || '/me.webp', '…the public page''s');
-  perform pg_temp.ok((select count(*) from storage.objects where bucket_id = 'post-photos') = 1, 'sees one post photo');
-  perform pg_temp.ok((select name from storage.objects where bucket_id = 'post-photos') = pg_temp.id('alice') || '/p.webp', '…the public post''s');
+  perform pg_temp.ok((select count(*) from storage.objects where bucket_id = 'avatars' and pg_temp.test_file(name)) = 1, 'sees one avatar');
+  perform pg_temp.ok((select name from storage.objects where bucket_id = 'avatars' and pg_temp.test_file(name)) = pg_temp.id('alice') || '/me.webp', '…the public page''s');
+  perform pg_temp.ok((select count(*) from storage.objects where bucket_id = 'post-photos' and pg_temp.test_file(name)) = 1, 'sees one post photo');
+  perform pg_temp.ok((select name from storage.objects where bucket_id = 'post-photos' and pg_temp.test_file(name)) = pg_temp.id('alice') || '/p.webp', '…the public post''s');
 end $$;
 
 -- ---------- Signed in: unchanged ----------
@@ -169,14 +172,14 @@ begin
   update public.bartenders set schedule_visibility = 'regulars' where id = pg_temp.id('alice');
   perform pg_temp.anon();
   perform pg_temp.ok(pg_temp.page('alice') is null, 'page set to regulars only: signed-out visitor sees nothing');
-  perform pg_temp.ok((select count(*) from storage.objects) = 0, '…and no photos');
+  perform pg_temp.ok((select count(*) from storage.objects where pg_temp.test_file(name)) = 0, '…and no photos');
 
   perform pg_temp.login(pg_temp.id('alice'));
   update public.bartenders set schedule_visibility = 'public' where id = pg_temp.id('alice');
   update public.posts set visibility = 'regulars' where bartender_id = pg_temp.id('alice');
   perform pg_temp.anon();
   perform pg_temp.ok(json_array_length(pg_temp.page('alice')->'posts') = 0, 'post switched to regulars: gone from the page');
-  perform pg_temp.ok((select count(*) from storage.objects where bucket_id = 'post-photos') = 0, '…and its photo');
+  perform pg_temp.ok((select count(*) from storage.objects where bucket_id = 'post-photos' and pg_temp.test_file(name)) = 0, '…and its photo');
 end $$;
 
 select pg_temp.admin();
