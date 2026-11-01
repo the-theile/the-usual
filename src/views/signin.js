@@ -1,6 +1,6 @@
 import { h, screen, backLink, clear } from '../lib/dom.js';
 import { supabase } from '../supabase.js';
-import { loadMe, me, getPendingInvite } from '../state.js';
+import { loadMe, me, getPendingInvite, getReturnTo, setReturnTo } from '../state.js';
 import { navigate } from '../router.js';
 import { oops } from '../lib/toast.js';
 
@@ -100,6 +100,7 @@ export async function signinView() {
       const pending = getPendingInvite();
       if (!me.profile) navigate('/onboarding', { replace: true });
       else if (pending) navigate(`/join?t=${encodeURIComponent(pending)}`, { replace: true });
+      else if (getReturnTo()) { const to = getReturnTo(); setReturnTo(null); navigate(to, { replace: true }); }
       else navigate('/', { replace: true });
     }
     input.addEventListener('input', () => {

@@ -34,6 +34,17 @@ export function setMode(mode) {
   try { localStorage.setItem(MODE_KEY, mode); } catch { /* private mode */ }
 }
 
+// A bartender page to come back to after signing in from it (this tab only).
+const RETURN_KEY = 'usual.returnTo';
+export function getReturnTo() {
+  try { return sessionStorage.getItem(RETURN_KEY); } catch { return null; }
+}
+export function setReturnTo(path) {
+  try {
+    if (path) sessionStorage.setItem(RETURN_KEY, path); else sessionStorage.removeItem(RETURN_KEY);
+  } catch { /* ignore */ }
+}
+
 // An invite token remembered across sign-in (QR scanned before having an account).
 const PENDING_KEY = 'usual.pendingInvite';
 export function getPendingInvite() {
