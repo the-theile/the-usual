@@ -4,6 +4,7 @@ import { me, uid, loadMe } from '../../state.js';
 import { compressImage, uploadPhoto, photoUrl } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { loadBars } from './schedule.js';
+import { deleteAccountSection } from '../account.js';
 
 function timezones() {
   let list = [];
@@ -128,7 +129,7 @@ export async function profileView({ query }) {
       ? h('div', { class: 'stack' },
           h('a', { class: 'btn btn-primary btn-xl', href: '#/schedule' }, 'Next: add my shifts'),
           h('a', { class: 'btn btn-ghost', href: '#/' }, 'Do this later'))
-      : null,
+      : deleteAccountSection(),
   );
 }
 

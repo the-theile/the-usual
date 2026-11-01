@@ -16,6 +16,7 @@ A mobile-first web app built with plain JavaScript and Vite, with Supabase for s
 - **Reactions & replies:** regulars react to a post (🍻 ❤️ 😂 🔥 👀 👏, one each) and can reply privately. Regulars see reaction counts only; the bartender sees who reacted. Each reply is a private conversation between that regular and the bartender, who can answer (20 messages max per conversation). Senders can edit or delete their own messages. Reacting and replying close 7 days after a post. The bartender's home shows a "new" badge.
 - **Regular profiles:** regulars can add a photo, "my usual" (their go-to drink) and a birthday (month + day, no year) on **My profile**. Only the bartenders they follow can see these, plus a bartender who blocked them. Other regulars never do, and neither do a bartender-regular's own regulars. The regular home suggests setting this up once they follow someone.
 - **For bartenders:** My regulars shows each regular's photo and usual. Tapping a regular opens their page, where the bartender can keep a **private note** (only that bartender ever sees it). Their home shows **birthdays this week**, and the reactions & replies screen shows faces and usual drinks.
+- **Delete my account:** at the bottom of My profile (or My profile & bars for bartenders). It removes the person's photos, then everything else they added, and signs them out. It can't be undone.
 - **Silent blocking,** enforced in the database (RLS): the blocked person loses posts, schedule, profile and photos, and codes and links stop working for them. They are never told.
 
 ## Project layout
@@ -65,7 +66,7 @@ The QR codes and invite links use the site's own address, so they work on whatev
 
 Paste `supabase/tests/privacy_test.sql` into the Supabase **SQL editor** and run it. It creates throwaway test users, checks 74 privacy rules and then **rolls everything back**. It should end without a `FAIL:` error.
 
-Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) and `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes).
+Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) and `supabase/tests/delete_account_test.sql` (account deletion).
 
 ## Security notes
 
