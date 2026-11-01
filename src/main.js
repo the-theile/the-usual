@@ -6,6 +6,7 @@ import { supabase } from './supabase.js';
 import { me, loadMe, getMode } from './state.js';
 import { route, match, parseHash, navigate } from './router.js';
 import { h, screen } from './lib/dom.js';
+import { initInstall } from './lib/install.js';
 
 import { welcomeView } from './views/welcome.js';
 import { signinView } from './views/signin.js';
@@ -88,6 +89,7 @@ async function render() {
 }
 
 window.addEventListener('hashchange', render);
+initInstall();
 
 supabase.auth.onAuthStateChange((event, session) => {
   // Don't await Supabase calls inside this callback (supabase-js deadlock); defer.
