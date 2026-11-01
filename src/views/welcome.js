@@ -21,5 +21,12 @@ export async function welcomeView() {
       h('li', {}, 'Sign in with a text message code. No password.'),
       h('li', {}, 'Your phone number is never shown to anyone.'),
     ),
+    h('h2', {}, 'How it works'),
+    h('p', { class: 'muted' },
+      h('strong', {}, 'Bartenders: '),
+      'add the bars you work at and your shifts, then invite your regulars with a QR code, a spoken code or a link. Share posts with just your regulars or with anyone who has your link.'),
+    h('p', { class: 'muted' },
+      h('strong', {}, 'Regulars: '),
+      'scan the code or open the link your bartender gives you. Your home screen shows who\'s working tonight and where, plus their latest posts.'),
   );
 }

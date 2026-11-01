@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#1c120b" />
-    <meta name="description" content="Know where your bartender is working tonight." />
-    <title>The Usual</title>
+    <meta name="description" content="The Usual lets your favourite bartender tell you where they're working tonight. Follow their shifts and posts without swapping phone numbers or socials." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <title>The Usual – Know where your bartender is working tonight</title>
+    <link rel="canonical" href="https://gettheusual.bar/" />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -13,6 +15,7 @@
     <!-- Link previews (iMessage, WhatsApp, Slack, Facebook, X…) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="The Usual" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://gettheusual.bar/" />
     <meta property="og:title" content="The Usual" />
     <meta property="og:description" content="Know where your bartender is working tonight. No phone numbers, no socials." />
@@ -28,9 +31,35 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="The Usual" />
+
+    <!-- Structured data for search engines (a data block, not a script; allowed by the CSP) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "The Usual",
+        "url": "https://gettheusual.bar/",
+        "description": "Bartenders tell their regulars where they're working tonight, without sharing a phone number or social media.",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Any (web browser)",
+        "browserRequirements": "Requires JavaScript",
+        "image": "https://gettheusual.bar/og-image.jpg",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
   </head>
   <body>
-    <main id="app" tabindex="-1"><p class="loading">Pouring…</p></main>
+    <main id="app" tabindex="-1">
+      <p class="loading">Pouring…</p>
+      <noscript>
+        <h1>The Usual</h1>
+        <p>Know where your favourite bartender is working tonight. Bartenders share their shifts and posts with their regulars, with no phone numbers and no socials.</p>
+        <h2>How it works</h2>
+        <p><strong>Bartenders:</strong> add the bars you work at and your shifts, then invite your regulars with a QR code, a spoken code or a link. Share posts with just your regulars or with anyone who has your link.</p>
+        <p><strong>Regulars:</strong> scan the code or open the link your bartender gives you. Your home screen shows who's working tonight and where, plus their latest posts.</p>
+        <p>The Usual needs JavaScript turned on. Please enable it and reload the page.</p>
+      </noscript>
+    </main>
     <div id="toast" role="status" aria-live="polite"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
