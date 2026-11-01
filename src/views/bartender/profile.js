@@ -19,7 +19,7 @@ export async function profileView({ query }) {
   const [bars, avatar] = await Promise.all([loadBars(), photoUrl('avatars', b.photo_path)]);
 
   // --- Photo ---
-  const img = h('img', { class: 'avatar avatar-xl', alt: 'Your photo', src: avatar || '/icon.svg' });
+  const img = h('img', { class: 'avatar avatar-xl', alt: 'Your photo', src: avatar || '/icon-192.png' });
   const file = h('input', { id: 'avatar', type: 'file', accept: 'image/*', class: 'visually-hidden' });
   const photoLabel = h('label', { for: 'avatar', class: 'btn btn-secondary' }, avatar ? 'Change my photo' : 'Add my photo');
   file.addEventListener('change', async () => {

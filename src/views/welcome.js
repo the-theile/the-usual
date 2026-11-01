@@ -3,7 +3,7 @@ import { getPendingInvite } from '../state.js';
 
 export function logo() {
   return h('div', { class: 'logo', 'aria-hidden': 'true' },
-    h('img', { src: '/icon.svg', alt: '', width: 72, height: 72 }));
+    h('img', { src: '/icon-192.png', alt: '', width: 72, height: 72 }));
 }
 
 export async function welcomeView() {
