@@ -24,32 +24,34 @@ import { regularProfileView } from './views/regular/me.js';
 import { regularThreadView, bartenderResponsesView } from './views/responses.js';
 
 // ===== Routes =====
+// title: fixed screen name for the browser tab/history. Never put names or other personal data in it.
 const B = { bartender: true };
-route('/', async (ctx) => (me.bartender && getMode() !== 'regular' ? bartenderHomeView(ctx) : regularHomeView(ctx)));
+route('/', async (ctx) => (me.bartender && getMode() !== 'regular' ? bartenderHomeView(ctx) : regularHomeView(ctx)), { title: 'Home' });
 route('/welcome', welcomeView, { public: true });
-route('/signin', signinView, { public: true });
-route('/join', joinView, { public: true });
-route('/onboarding', onboardingView, { noProfile: true });
-route('/become-bartender', becomeBartenderView);
-route('/code', enterCodeView);
-route('/me', regularProfileView);
-route('/b/:pid', bartenderPageView);
-route('/p/:id', regularThreadView);
-route('/post', postView, B);
-route('/invite', inviteView, B);
-route('/schedule', scheduleView, B);
-route('/schedule/weekly/new', weeklyFormView, B);
-route('/schedule/weekly/:id', weeklyFormView, B);
-route('/schedule/once/new', onceFormView, B);
-route('/schedule/once/:id', onceFormView, B);
-route('/schedule/night/:patternId/:date', nightFormView, B);
-route('/profile', profileView, B);
-route('/regulars', regularsView, B);
-route('/regulars/:id', regularDetailView, B);
-route('/responses/:id', bartenderResponsesView, B);
+route('/signin', signinView, { public: true, title: 'Sign in' });
+route('/join', joinView, { public: true, title: 'Invite' });
+route('/onboarding', onboardingView, { noProfile: true, title: 'Welcome' });
+route('/become-bartender', becomeBartenderView, { title: 'Set up your bartender page' });
+route('/code', enterCodeView, { title: 'Add a bartender' });
+route('/me', regularProfileView, { title: 'My profile' });
+route('/b/:pid', bartenderPageView, { title: 'Bartender' });
+route('/p/:id', regularThreadView, { title: 'Update' });
+route('/post', postView, { ...B, title: 'Post an update' });
+route('/invite', inviteView, { ...B, title: 'Invite a regular' });
+route('/schedule', scheduleView, { ...B, title: 'My schedule' });
+route('/schedule/weekly/new', weeklyFormView, { ...B, title: 'Weekly shift' });
+route('/schedule/weekly/:id', weeklyFormView, { ...B, title: 'Weekly shift' });
+route('/schedule/once/new', onceFormView, { ...B, title: 'One-off shift' });
+route('/schedule/once/:id', onceFormView, { ...B, title: 'One-off shift' });
+route('/schedule/night/:patternId/:date', nightFormView, { ...B, title: 'Change a night' });
+route('/profile', profileView, { ...B, title: 'My profile & bars' });
+route('/regulars', regularsView, { ...B, title: 'My regulars' });
+route('/regulars/:id', regularDetailView, { ...B, title: 'Regular' });
+route('/responses/:id', bartenderResponsesView, { ...B, title: 'Reactions & replies' });
 
 // ===== Rendering =====
 const app = document.getElementById('app');
+const BASE_TITLE = document.title; // full SEO title from index.html, used for /welcome and untitled routes
 let renderSeq = 0;
 
 async function render() {
@@ -79,6 +81,7 @@ async function render() {
   }
   if (seq !== renderSeq || !node) return; // a newer navigation won
   app.replaceChildren(node);
+  document.title = r.opts.title ? `${r.opts.title} – The Usual` : BASE_TITLE;
   window.scrollTo(0, 0);
   const auto = app.querySelector('[data-autofocus]');
   (auto || app).focus({ preventScroll: true });
