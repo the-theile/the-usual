@@ -5,6 +5,7 @@ import { compressImage, uploadPhoto, photoUrl } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { loadBars } from './schedule.js';
 import { deleteAccountSection } from '../account.js';
+import { avatar as avatarEl } from '../regular/home.js';
 
 function timezones() {
   let list = [];
@@ -19,7 +20,10 @@ export async function profileView({ query }) {
   const [bars, avatar] = await Promise.all([loadBars(), photoUrl('avatars', b.photo_path)]);
 
   // --- Photo ---
-  const img = h('img', { class: 'avatar avatar-xl', alt: 'Your photo', src: avatar || '/icon-192.png' });
+  // No photo yet → plain initial circle (same as everywhere else); swapped for an <img> after upload.
+  let img = avatar
+    ? h('img', { class: 'avatar avatar-xl', alt: 'Your photo', src: avatar })
+    : avatarEl(null, me.profile.display_name, 'avatar-xl');
   const file = h('input', { id: 'avatar', type: 'file', accept: 'image/*', class: 'visually-hidden' });
   const photoLabel = h('label', { for: 'avatar', class: 'btn btn-secondary' }, avatar ? 'Change my photo' : 'Add my photo');
   file.addEventListener('change', async () => {
@@ -34,7 +38,9 @@ export async function profileView({ query }) {
       if (error) throw error;
       if (old) await supabase.storage.from('avatars').remove([old]);
       me.bartender.photo_path = path;
-      img.src = URL.createObjectURL(blob);
+      const next = h('img', { class: 'avatar avatar-xl', alt: 'Your photo', src: URL.createObjectURL(blob) });
+      img.replaceWith(next);
+      img = next;
       photoLabel.textContent = 'Change my photo';
       toast('Photo saved');
     } catch (e) {
