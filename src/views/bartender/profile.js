@@ -56,7 +56,7 @@ export async function profileView({ query }) {
   const tz = h('select', { id: 'tz', value: b.timezone },
     timezones().map((z) => h('option', { value: z }, z.replace(/_/g, ' '))));
   const err = h('p', { class: 'error', role: 'alert' });
-  const detailsForm = h('form', { class: 'stack', novalidate: true },
+  const detailsForm = h('form', { class: 'stack', noValidate: true },
     h('div', { class: 'stack-tight' }, h('label', { for: 'name' }, 'Your name'), name,
       h('p', { class: 'help' }, 'Shown to your regulars.')),
     h('div', { class: 'stack-tight' }, h('label', { for: 'bio' }, 'A little about you (optional)'), bio),
@@ -103,7 +103,7 @@ export async function profileView({ query }) {
   const barName = h('input', { id: 'bar-name', type: 'text', maxlength: 60, placeholder: 'e.g. The Tiki Bar', required: true });
   const barArea = h('input', { id: 'bar-area', type: 'text', maxlength: 60, placeholder: 'e.g. Main St, Northside' });
   const barErr = h('p', { class: 'error', role: 'alert' });
-  const barForm = h('form', { class: 'stack card', novalidate: true },
+  const barForm = h('form', { class: 'stack card', noValidate: true },
     h('h3', {}, 'Add a bar'),
     h('div', { class: 'stack-tight' }, h('label', { for: 'bar-name' }, 'Bar name'), barName),
     h('div', { class: 'stack-tight' }, h('label', { for: 'bar-area' }, 'Street or neighbourhood (optional)'), barArea),
@@ -183,7 +183,7 @@ function linkSectionBody(rerender) {
   showPreview();
 
   const err = h('p', { class: 'error', role: 'alert' });
-  const form = h('form', { class: 'stack', novalidate: true },
+  const form = h('form', { class: 'stack', noValidate: true },
     h('div', { class: 'stack-tight' }, h('label', { for: 'handle' }, 'Your link'), input, preview,
       h('p', { class: 'help', id: 'handle-help' },
         `Letters, numbers and hyphens. You can change it once every ${COOLDOWN_DAYS} days, and old links keep working.`,

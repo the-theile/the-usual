@@ -23,7 +23,7 @@ export async function onboardingView() {
       autocapitalize: 'words', 'data-autofocus': '', 'aria-describedby': 'name-help',
     });
     const err = h('p', { class: 'error', role: 'alert' });
-    const form = h('form', { class: 'stack', novalidate: true },
+    const form = h('form', { class: 'stack', noValidate: true },
       h('label', { for: 'name' }, 'What should we call you?'),
       input,
       h('p', { id: 'name-help', class: 'help' },

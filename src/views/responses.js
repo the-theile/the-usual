@@ -169,7 +169,7 @@ function conversation({ messages, postId, regularId, open, otherName, placeholde
   const counter = h('p', { class: 'help counter', 'aria-live': 'polite' }, `0 / ${MAX_BODY}`);
   ta.addEventListener('input', () => { counter.textContent = `${ta.value.length} / ${MAX_BODY}`; });
   const send = h('button', { type: 'submit', class: 'btn btn-primary' }, 'Send');
-  const form = h('form', { class: 'stack-tight', novalidate: true }, ta, counter, send);
+  const form = h('form', { class: 'stack-tight', noValidate: true }, ta, counter, send);
   const note = h('p', { class: 'help' });
 
   function refresh() {

@@ -97,7 +97,7 @@ export async function regularDetailView({ params }) {
   const note = h('textarea', { id: 'note', rows: 4, maxlength: MAX_NOTE, value: r.note || '',
     placeholder: 'e.g. Allergic to citrus. Partner is Dana. Likes the corner seat.', 'aria-describedby': 'note-help' });
   const err = h('p', { class: 'error', role: 'alert' });
-  const form = h('form', { class: 'stack-tight', novalidate: true },
+  const form = h('form', { class: 'stack-tight', noValidate: true },
     h('label', { for: 'note' }, 'My note'),
     note,
     h('p', { id: 'note-help', class: 'help' }, `Only you can see this. ${r.display_name} is never shown it.`),
