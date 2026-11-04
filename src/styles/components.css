@@ -225,6 +225,7 @@
 }
 .link-fallback { display: flex; flex-direction: column; gap: 0.5rem; }
 .link-fallback:empty { display: none; }
+.invite-url span { overflow-wrap: anywhere; }
 
 /* ===== Dialog ===== */
 .dialog {

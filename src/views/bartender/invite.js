@@ -62,6 +62,8 @@ export async function inviteView() {
     h('p', { class: 'invite-code', 'aria-label': `Code: ${data.code.split('-').join(', ')}` }, data.code),
     h('p', { class: 'help center' }, `Today’s code works until ${until}. You get a new one each day.`),
     actionButton('Copy invite link', copyLink, { class: 'btn btn-primary btn-xl' }),
+    h('p', { class: 'help center invite-url' }, `The QR code opens this link (works until ${until}): `,
+      h('span', {}, joinUrl(data.token))),
     linkBox,
     h('p', { class: 'help center' }, 'Send the link by text, email or however you like.'),
     actionButton('Code got out? Get new codes', async () => {
