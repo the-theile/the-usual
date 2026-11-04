@@ -264,12 +264,12 @@ export async function weeklyFormView({ params }) {
     if (!t.start_time) { err.textContent = 'Pick a start time.'; return; }
     const row = { bar_id, weekdays, ...t, note: note.read() };
     const btn = form.querySelector('button[type=submit]');
-    btn.disabled = true;
+    const label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Saving…'; // stays busy on success until the schedule list replaces this screen
     const res = p
       ? await supabase.from('shift_patterns').update(row).eq('id', p.id)
       : await supabase.from('shift_patterns').insert({ ...row, bartender_id: me.bartender.id, starts_on: barDay(me.bartender.timezone) });
-    btn.disabled = false;
-    if (res.error) return oops(res.error);
+    if (res.error) { btn.disabled = false; btn.textContent = label; return oops(res.error); }
     toast('Schedule saved');
     navigate('/schedule', { replace: true });
   });
@@ -321,10 +321,13 @@ export async function onceFormView({ params }) {
     if (!date.value) { err.textContent = 'Pick a day.'; return; }
     if (!t.start_time) { err.textContent = 'Pick a start time.'; return; }
     const row = { bar_id, shift_date: date.value, ...t, note: note.read() };
+    const btn = form.querySelector('button[type=submit]');
+    const label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Saving…'; // stays busy on success until the schedule list replaces this screen
     const res = s
       ? await supabase.from('shifts').update(row).eq('id', s.id)
       : await supabase.from('shifts').insert({ ...row, bartender_id: me.bartender.id });
-    if (res.error) return oops(res.error);
+    if (res.error) { btn.disabled = false; btn.textContent = label; return oops(res.error); }
     toast('Shift saved');
     navigate('/schedule', { replace: true });
   });
@@ -363,11 +366,14 @@ export async function nightFormView({ params }) {
     const bar_id = readBar(form);
     const t = times.read();
     if (!bar_id || !t.start_time) { err.textContent = 'Pick a bar and a start time.'; return; }
+    const btn = form.querySelector('button[type=submit]');
+    const label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Saving…'; // stays busy on success until the schedule list replaces this screen
     const { error } = await supabase.from('shift_exceptions').upsert({
       pattern_id: p.id, bartender_id: me.bartender.id, occurrence_date: day,
       cancelled: false, bar_id, ...t, note: note.read(),
     }, { onConflict: 'pattern_id,occurrence_date' });
-    if (error) return oops(error);
+    if (error) { btn.disabled = false; btn.textContent = label; return oops(error); }
     toast('Saved for this night only');
     navigate('/schedule', { replace: true });
   });
