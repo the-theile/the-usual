@@ -18,6 +18,7 @@ export async function welcomeView() {
     pending ? h('p', { class: 'card note' }, 'You have an invite waiting. Sign in to accept it.') : null,
     toPage ? h('p', { class: 'card note' }, 'Sign in to see this bartender’s page. We’ll take you straight there.') : null,
     h('a', { class: 'btn btn-primary btn-xl', href: '#/signin', 'data-autofocus': '' }, 'Get started'),
+    h('a', { class: 'btn btn-ghost', href: '#/sample' }, 'See an example'),
     h('ul', { class: 'plain-list reassure' },
       h('li', {}, 'Nothing to download.'),
       h('li', {}, 'Sign in with a text message code. No password.'),

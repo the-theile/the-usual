@@ -9,6 +9,7 @@ import { h, screen } from './lib/dom.js';
 import { initInstall } from './lib/install.js';
 
 import { welcomeView } from './views/welcome.js';
+import { sampleView } from './views/sample.js';
 import { signinView } from './views/signin.js';
 import { onboardingView, becomeBartenderView } from './views/onboarding.js';
 import { joinView } from './views/join.js';
@@ -30,6 +31,7 @@ import { modReportsView, modMetricsView } from './views/mod.js';
 const B = { bartender: true };
 route('/', async (ctx) => (me.bartender && getMode() !== 'regular' ? bartenderHomeView(ctx) : regularHomeView(ctx)), { title: 'Home' });
 route('/welcome', welcomeView, { public: true });
+route('/sample', sampleView, { public: true, title: 'Sample bartender' });
 route('/signin', signinView, { public: true, title: 'Sign in' });
 route('/join', joinView, { public: true, title: 'Invite' });
 route('/onboarding', onboardingView, { noProfile: true, title: 'Welcome' });
