@@ -30,7 +30,9 @@ export async function enterCodeView() {
     if (code.replace(/[^a-z0-9]/gi, '').length < 4) { err.textContent = 'Please type the whole code.'; input.focus(); return; }
     submit.disabled = true; submit.textContent = 'Checking…';
     const { data, error } = await supabase.rpc('redeem_invite', { p_input: code });
-    submit.disabled = false; submit.textContent = 'Connect';
+    // On success keep the button busy until the bartender's page replaces this screen.
+    if (error || !data.ok) { submit.disabled = false; submit.textContent = 'Connect'; }
+    else submit.textContent = 'Opening…';
     if (error) return oops(error);
     if (!data.ok) { err.textContent = MESSAGES[data.reason] || MESSAGES.not_valid; input.select(); return; }
     toast(data.already ? `You already follow ${data.display_name}` : `You’re now following ${data.display_name}`);
