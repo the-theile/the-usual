@@ -31,7 +31,8 @@ export async function welcomeView() {
       h('strong', {}, 'Regulars: '),
       'scan the code or open the link your bartender gives you. Your home screen shows who\'s working tonight and where, plus their latest posts.'),
     h('p', { class: 'help legal-links' },
-      h('a', { href: '/privacy' }, 'Privacy'), ' · ', h('a', { href: '/terms' }, 'Terms'), ' · ',
-      h('a', { href: 'mailto:cheers@gettheusual.bar' }, 'Contact')),
+      h('a', { href: '/privacy', target: '_blank', rel: 'noopener' }, 'Privacy'), ' · ',
+      h('a', { href: '/terms', target: '_blank', rel: 'noopener' }, 'Terms'), ' · ',
+      h('a', { href: 'mailto:cheers@gettheusual.bar' }, 'Contact'), ': cheers@gettheusual.bar'),
   );
 }
