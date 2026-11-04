@@ -37,6 +37,9 @@ export async function inviteView() {
         await navigator.clipboard.writeText(url);
       }
       toast('Invite link copied. It works for 7 days.');
+      // Show the copied link so the bartender can see where it points.
+      linkBox.append(h('p', { class: 'help' }, 'Copied this link. It works for 7 days.'),
+        h('input', { type: 'text', readonly: true, value: url, 'aria-label': 'Invite link' }));
     } catch (e) {
       // Clipboard blocked: show the link so it can be copied by hand.
       try {

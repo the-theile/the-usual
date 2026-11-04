@@ -194,7 +194,7 @@ function barPicker(bars, selected) {
 function timeFields(start = '18:00', end = null) {
   const startInput = h('input', { id: 'start', type: 'time', step: 900, value: start.slice(0, 5), required: true });
   const closeBox = h('input', { id: 'until-close', type: 'checkbox', checked: !end });
-  const endInput = h('input', { id: 'end', type: 'time', step: 900, value: (end || '23:00').slice(0, 5) });
+  const endInput = h('input', { id: 'end', type: 'time', step: 900, value: (end || '00:00').slice(0, 5) });
   const endWrap = h('div', { class: 'stack-tight', hidden: !end }, h('label', { for: 'end' }, 'Finishes at'), endInput);
   closeBox.addEventListener('change', () => { endWrap.hidden = closeBox.checked; });
   const node = h('div', { class: 'stack' },
