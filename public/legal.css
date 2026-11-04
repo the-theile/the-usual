@@ -32,7 +32,7 @@ main {
            calc(40px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 .top { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 0 1.5rem; text-decoration: none; color: var(--text); }
-.top img { border-radius: 10px; }
+.top img { border-radius: 10px; filter: drop-shadow(0 6px 24px rgba(245, 176, 65, 0.35)); } /* same glow as .hero .logo img on welcome */
 .top span { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--amber-hi); }
 h1, h2, h3 { font-family: var(--font-display); line-height: 1.25; font-weight: 700; }
 h1 { font-size: 1.9rem; margin: 0 0 0.25rem; }
