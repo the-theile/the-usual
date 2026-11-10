@@ -80,8 +80,8 @@ export async function bartenderPageView({ params }) {
       h('h2', { id: 'coming-h' }, 'Coming up'),
       later.length
         ? h('ul', { class: 'plain-list schedule-list' }, later.map((s) => h('li', {},
-            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today)),
-            h('span', {}, h('strong', {}, s.bar_name), ' · ', fmtShift(s.start_time, s.end_time),
+            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today, { short: true })),
+            h('span', {}, h('strong', { class: 'block' }, s.bar_name), h('span', { class: 'shift-time' }, fmtShift(s.start_time, s.end_time)),
               s.note ? h('span', { class: 'help block' }, s.note) : null))))
         : h('p', { class: 'muted' }, 'No shifts posted for the next two weeks.'),
     ),

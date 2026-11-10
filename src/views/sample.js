@@ -87,8 +87,8 @@ export async function sampleView() {
     h('section', { 'aria-labelledby': 'coming-h' },
       h('h2', { id: 'coming-h' }, 'Coming up'),
       h('ul', { class: 'plain-list schedule-list' }, later.map((s) => h('li', {},
-        h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today)),
-        h('span', {}, h('strong', {}, s.bar_name), ' · ', fmtShift(s.start_time, s.end_time), shiftNote(s))))),
+        h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today, { short: true })),
+        h('span', {}, h('strong', { class: 'block' }, s.bar_name), h('span', { class: 'shift-time' }, fmtShift(s.start_time, s.end_time)), shiftNote(s))))),
     ),
 
     h('section', { 'aria-labelledby': 'bars-h' },
