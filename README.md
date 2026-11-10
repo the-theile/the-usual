@@ -82,7 +82,7 @@ Sign out and back in (or reload) and **Moderator tools** appears in the home men
 
 Paste `supabase/tests/privacy_test.sql` into the Supabase **SQL editor** and run it. It creates throwaway test users, checks 74 privacy rules and then **rolls everything back**. It should end without a `FAIL:` error.
 
-Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) `supabase/tests/delete_account_test.sql` (account deletion) and `supabase/tests/moderation_test.sql` (52 checks for reports, moderator tools, metrics and the 12-month clean-up).
+Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) `supabase/tests/delete_account_test.sql` (account deletion) and `supabase/tests/moderation_test.sql` (52 checks for reports, moderator tools, metrics and the 12-month clean-up) and `supabase/tests/post_bar_tag_test.sql` (bar tags on posts).
 
 ## Security notes
 
