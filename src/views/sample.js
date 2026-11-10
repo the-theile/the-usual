@@ -74,7 +74,7 @@ export async function sampleView() {
       h('strong', {}, 'Sample profile — this is an example. '),
       'Sam isn’t a real bartender. This is how a bartender’s page looks to their regulars.'),
     h('header', { class: 'profile-head' },
-      avatar(null, NAME, 'avatar-xl'),
+      avatar(null, NAME, 'avatar-lg'),
       h('h1', {}, NAME),
       h('p', { class: 'lead' }, BIO),
     ),
