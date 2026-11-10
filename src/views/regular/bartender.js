@@ -17,6 +17,17 @@ function pageNotFound() {
     h('a', { class: 'btn btn-primary', href: '#/code' }, 'I have a code'));
 }
 
+// Full-size photo in a dialog. Tap anywhere (or Close / Esc) to dismiss.
+function viewPhoto(url, alt) {
+  const dlg = h('dialog', { class: 'dialog photo-viewer', 'aria-label': alt },
+    h('img', { src: url, alt }),
+    h('button', { type: 'button', class: 'btn btn-ghost' }, 'Close'));
+  dlg.addEventListener('click', () => dlg.close());
+  dlg.addEventListener('close', () => dlg.remove());
+  document.body.append(dlg);
+  dlg.showModal();
+}
+
 // ===== #/tender/:handle — the same page, by the bartender's chosen link =====
 // resolve_handle applies the page's own visibility rules, and also accepts old handles.
 export async function tenderPageView(ctx) {
@@ -63,7 +74,10 @@ export async function bartenderPageView({ params }) {
     backLink('#/'),
     isMe ? h('p', { class: 'card note' }, 'This is how your page looks to your regulars.') : null,
     h('header', { class: 'profile-head' },
-      avatar(avatarUrl, name, 'avatar-xl'),
+      avatarUrl
+        ? h('button', { type: 'button', class: 'avatar-btn', 'aria-label': `View ${name}’s photo`,
+            onClick: () => viewPhoto(avatarUrl, `Photo of ${name}`) }, avatar(avatarUrl, name, 'avatar-lg'))
+        : avatar(null, name, 'avatar-lg'),
       h('h1', {}, name),
       b.bio ? h('p', { class: 'lead' }, b.bio) : null,
     ),
@@ -80,8 +94,8 @@ export async function bartenderPageView({ params }) {
       h('h2', { id: 'coming-h' }, 'Coming up'),
       later.length
         ? h('ul', { class: 'plain-list schedule-list' }, later.map((s) => h('li', {},
-            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today)),
-            h('span', {}, h('strong', {}, s.bar_name), ' · ', fmtShift(s.start_time, s.end_time),
+            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today, { short: true })),
+            h('span', {}, h('strong', { class: 'block' }, s.bar_name), h('span', { class: 'shift-time' }, fmtShift(s.start_time, s.end_time)),
               s.note ? h('span', { class: 'help block' }, s.note) : null))))
         : h('p', { class: 'muted' }, 'No shifts posted for the next two weeks.'),
     ),
