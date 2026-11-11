@@ -53,7 +53,7 @@ export async function bartenderPageView({ params }) {
   const [barsRes, schedRes, postsRes, connRes] = await Promise.all([
     supabase.from('bars').select('id, name, area').eq('bartender_id', b.id).order('sort'),
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: addDays(today, 13) }),
-    supabase.from('posts').select('id, bartender_id, body, photo_path, created_at, visibility').eq('bartender_id', b.id)
+    supabase.from('posts').select('id, bartender_id, body, photo_path, created_at, visibility, bar:bars!posts_bar_fkey(name)').eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(20),
     supabase.from('connections').select('bartender_id').eq('bartender_id', b.id).eq('regular_id', uid()).maybeSingle(),
   ]);

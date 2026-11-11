@@ -4,10 +4,21 @@ import { me, uid } from '../../state.js';
 import { navigate } from '../../router.js';
 import { compressImage, uploadPhoto } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
+import { barDay } from '../../lib/time.js';
 
 const MAX = 500;
 
 export async function postView() {
+  const b = me.bartender;
+  const today = barDay(b.timezone);
+  const [barsRes, tonightRes] = await Promise.all([
+    supabase.from('bars').select('id, name').eq('bartender_id', b.id).order('sort'),
+    supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: today }),
+  ]);
+  const bars = barsRes.data || [];
+  const tonightBars = new Set((tonightRes.data || []).filter((s) => !s.cancelled).map((s) => s.bar_id));
+  const preselect = bars.find((x) => tonightBars.has(x.id))?.id || '';
+
   let photo = null; // compressed Blob
   let previewUrl = null;
 
@@ -63,11 +74,23 @@ export async function postView() {
       : 'Shown on your page to anyone signed in with your link, once your schedule is set to “Anyone with my link”.'),
   );
 
+  // Optional bar tag, preselected to the bar they're on at today (if any).
+  const barOption = (value, title, desc) => h('label', { class: 'choice' },
+    h('input', { type: 'radio', name: 'bar', value, checked: value === preselect }),
+    h('span', {}, h('strong', {}, title), desc ? h('span', { class: 'help' }, desc) : null));
+  const barPicker = bars.length
+    ? h('fieldset', { class: 'card' },
+        h('legend', {}, 'Tag a bar (optional)'),
+        barOption('', 'No bar', null),
+        bars.map((x) => barOption(x.id, x.name, tonightBars.has(x.id) ? 'You’re on today' : null)))
+    : null;
+
   const submit = h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Post');
   const form = h('form', { class: 'stack', novalidate: true },
     h('label', { for: 'body' }, 'What’s happening?'),
     text, counter,
     file, photoBtn, preview,
+    barPicker,
     visibility,
     err,
     submit,
@@ -82,7 +105,8 @@ export async function postView() {
     try {
       if (photo) path = await uploadPhoto('post-photos', uid(), photo);
       const vis = form.querySelector('input[name=vis]:checked')?.value || 'regulars';
-      const { error } = await supabase.from('posts').insert({ bartender_id: me.bartender.id, body, photo_path: path, visibility: vis });
+      const barId = form.querySelector('input[name=bar]:checked')?.value || null;
+      const { error } = await supabase.from('posts').insert({ bartender_id: b.id, body, photo_path: path, visibility: vis, bar_id: barId });
       if (error) throw error;
       toast(vis === 'public' ? 'Posted publicly!' : 'Posted! Your regulars can see it now.');
       navigate('/', { replace: true });

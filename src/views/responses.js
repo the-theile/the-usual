@@ -199,7 +199,7 @@ function conversation({ messages, postId, regularId, open, otherName, placeholde
 
 async function loadPost(id) {
   const { data: p } = await supabase.from('posts')
-    .select('id, bartender_id, body, photo_path, created_at, visibility, bartenders(public_id, photo_path, profiles!bartenders_id_fkey(display_name))')
+    .select('id, bartender_id, body, photo_path, created_at, visibility, bar:bars!posts_bar_fkey(name), bartenders(public_id, photo_path, profiles!bartenders_id_fkey(display_name))')
     .eq('id', id).maybeSingle();
   return p;
 }
