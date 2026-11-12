@@ -25,6 +25,10 @@ A mobile-first web app built with plain JavaScript and Vite, with Supabase for s
   - **Suspended** people, with Unsuspend, and a log of every moderator action.
   - **Metrics** (`#/mod/metrics`): people, weekly active, bartender funnel (page → shift → first regular → posting → 5+ regulars), regulars per bartender, how regulars join (QR / spoken code / link), updates and response rate, safety (reports, blocks, suspensions), and a 14-day chart. Aggregates only.
 
+## iOS app
+
+The App Store app is a Capacitor shell around the live site. See [`native/README.md`](native/README.md) for setup, builds and releases, and [`native/APP_REVIEW_NOTES.md`](native/APP_REVIEW_NOTES.md) for the review notes.
+
 ## Project layout
 
 ```

@@ -16,6 +16,12 @@
           "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://aurzfzsgmnkqestlicrf.supabase.co; connect-src 'self' https://aurzfzsgmnkqestlicrf.supabase.co wss://aurzfzsgmnkqestlicrf.supabase.co; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
         }
       ]
+    },
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ]
     }
   ]
 }

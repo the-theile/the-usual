@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["49RV4NFK6S.bar.gettheusual.app"],
+        "components": [
+          { "/": "/", "#": "/join*", "comment": "Invite links and QR codes (gettheusual.bar/#/join?t=…)" },
+          { "/": "/", "#": "/b/*", "comment": "Bartender pages by public id" },
+          { "/": "/tender/*", "comment": "Bartender pages by handle" }
+        ]
+      }
+    ]
+  }
+}

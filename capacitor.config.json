@@ -1,0 +1,14 @@
+{
+  "appId": "bar.gettheusual.app",
+  "appName": "The Usual",
+  "webDir": "native/www",
+  "server": {
+    "url": "https://gettheusual.bar",
+    "errorPath": "offline.html",
+    "allowNavigation": ["gettheusual.bar"]
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#1c120b"
+  }
+}

@@ -7,6 +7,7 @@ import { me, loadMe, getMode, setReturnTo } from './state.js';
 import { route, match, parseHash, navigate } from './router.js';
 import { h, screen } from './lib/dom.js';
 import { initInstall } from './lib/install.js';
+import { initNative } from './lib/native.js';
 
 import { welcomeView } from './views/welcome.js';
 import { sampleView } from './views/sample.js';
@@ -113,6 +114,7 @@ const tenderPath = location.pathname.match(/^\/tender\/([^/]+)\/?$/);
 if (tenderPath && !location.hash) history.replaceState(null, '', `/#/tender/${tenderPath[1]}`);
 
 window.addEventListener('hashchange', render);
+initNative();
 initInstall();
 
 supabase.auth.onAuthStateChange((event, session) => {

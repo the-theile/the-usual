@@ -1,6 +1,7 @@
 // "Add to Home Screen" tips for iPhone and Android.
 // Android/Chrome can show its own install prompt; iPhone needs manual steps via the Share menu.
 import { h } from './dom.js';
+import { isNativeApp } from './native.js';
 
 const DISMISS_KEY = 'usual.installTipDismissed';
 let deferredPrompt = null;
@@ -18,7 +19,8 @@ export function initInstall() {
 }
 
 export function isInstalled() {
-  return window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+  // The App Store app counts as installed: no "Add to Home Screen" tips there.
+  return isNativeApp() || window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
 }
 
 function platform() {
