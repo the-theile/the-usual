@@ -141,5 +141,21 @@ export async function bartenderPageView({ params }) {
         }, { class: 'btn btn-ghost' })
       : null,
     isMe ? null : reportButton('person', b.id, name, { label: `Report ${name}`, className: 'btn btn-ghost' }),
+    isMe ? null : actionButton(`Block ${name}`, () => blockBartenderFlow(b.id, name), { class: 'btn btn-ghost' }),
   );
+}
+
+// Blocking unfollows and hides the bartender everywhere (migration 0014). The
+// bartender isn't told (it looks like an unfollow); moderators are.
+async function blockBartenderFlow(id, name) {
+  const ok = await confirmDialog({
+    title: `Block ${name}?`,
+    body: `${name} won’t be told. You’ll stop following them, their page and updates disappear for you, they can’t see your profile, and their codes won’t work until you unblock them (My profile). Our moderators are notified so they can check for abuse.`,
+    confirmText: `Block ${name}`, danger: true, cancelText: 'Cancel',
+  });
+  if (!ok) return;
+  const { error } = await supabase.rpc('block_bartender', { p_bartender: id });
+  if (error) return oops(error);
+  toast(`${name} is blocked`);
+  navigate('/', { replace: true });
 }

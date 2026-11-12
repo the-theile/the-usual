@@ -19,7 +19,7 @@ export async function loadMyRegulars() {
 async function blockFlow(r) {
   const ok = await confirmDialog({
     title: `Block ${r.display_name}?`,
-    body: `${r.display_name} won’t be told. They’ll stop seeing your updates, schedule and profile, and your codes and links won’t work for them.`,
+    body: `${r.display_name} won’t be told. They’ll stop seeing your updates, schedule and profile, and your codes and links won’t work for them. Our moderators are notified so they can check for abuse.`,
     confirmText: `Block ${r.display_name}`, danger: true, cancelText: 'Cancel',
   });
   if (!ok) return false;

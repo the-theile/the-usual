@@ -25,6 +25,7 @@ export async function signinView() {
   const root = screen();
   let phone = '';
   let ofAge = false;
+  let agreed = false;
   let resendAt = 0;
 
   function stepPhone(errorText) {
@@ -36,8 +37,12 @@ export async function signinView() {
     });
     const err = h('p', { class: 'error', role: 'alert' }, errorText || '');
     const ageBox = h('input', { id: 'of-age', type: 'checkbox', required: true, checked: ofAge });
-    const submitBtn = h('button', { type: 'submit', class: 'btn btn-primary btn-xl', disabled: !ofAge }, 'Text me a code');
-    ageBox.addEventListener('change', () => { ofAge = ageBox.checked; submitBtn.disabled = !ofAge; });
+    // App Review (guideline 1.2) wants the Terms actively agreed to before sign-in, not a passive line.
+    const termsBox = h('input', { id: 'agree-terms', type: 'checkbox', required: true, checked: agreed });
+    const submitBtn = h('button', { type: 'submit', class: 'btn btn-primary btn-xl', disabled: !(ofAge && agreed) }, 'Text me a code');
+    const sync = () => { ofAge = ageBox.checked; agreed = termsBox.checked; submitBtn.disabled = !(ofAge && agreed); };
+    ageBox.addEventListener('change', sync);
+    termsBox.addEventListener('change', sync);
     const form = h('form', { class: 'stack', novalidate: true },
       h('label', { for: 'phone' }, 'Your mobile number'),
       input,
@@ -45,15 +50,17 @@ export async function signinView() {
         "We'll text you a 6-digit code. Nobody else ever sees your number. Outside the US or Canada? Start with + and your country code."),
       h('label', { class: 'check', for: 'of-age' }, ageBox,
         h('span', {}, 'I’m of legal drinking age: 21 or older in the US, or the legal drinking age where I live.')),
+      h('label', { class: 'check', for: 'agree-terms' }, termsBox,
+        h('span', {}, 'I agree to the ', legalLink('/terms', 'Terms'), ', including zero tolerance for abusive or objectionable content, and the ',
+          legalLink('/privacy', 'Privacy Policy'), '.')),
       err,
       submitBtn,
-      h('p', { class: 'help' },
-        'By tapping “Text me a code” you agree to our ', legalLink('/terms', 'Terms'), ' and ',
-        legalLink('/privacy', 'Privacy Policy'), ', and to get a one-time sign-in code by text. Message and data rates may apply.'),
+      h('p', { class: 'help' }, 'We’ll text you a one-time sign-in code. Message and data rates may apply.'),
     );
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!ageBox.checked) { err.textContent = 'Please confirm you’re of legal drinking age.'; ageBox.focus(); return; }
+      if (!termsBox.checked) { err.textContent = 'Please agree to the Terms to continue.'; termsBox.focus(); return; }
       const e164 = toE164(input.value);
       if (!e164) { err.textContent = 'Please check the number. It should look like (555) 123-4567.'; input.focus(); return; }
       phone = e164;

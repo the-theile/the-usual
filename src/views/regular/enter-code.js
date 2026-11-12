@@ -8,6 +8,7 @@ const MESSAGES = {
   too_many_tries: 'Too many tries. Please wait 10 minutes and try again.',
   self: 'That’s your own code! Give it to your regulars.',
   no_profile: 'Please finish setting up your account first.',
+  you_blocked_them: 'You blocked this bartender. To follow them, unblock them on My profile first.',
 };
 
 export async function enterCodeView() {
@@ -33,6 +34,7 @@ export async function enterCodeView() {
     // On success keep the button busy until the bartender's page replaces this screen.
     if (error || !data.ok) { submit.disabled = false; submit.textContent = 'Connect'; }
     else submit.textContent = 'Opening…';
+    if (error?.message?.includes('you_blocked_them')) { err.textContent = MESSAGES.you_blocked_them; return; }
     if (error) return oops(error);
     if (!data.ok) { err.textContent = MESSAGES[data.reason] || MESSAGES.not_valid; input.select(); return; }
     toast(data.already ? `You already follow ${data.display_name}` : `You’re now following ${data.display_name}`);
