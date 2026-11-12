@@ -105,7 +105,7 @@ function reportCard(r, photo) {
   }
 
   return h('article', { class: 'card stack-tight report' },
-    h('p', { class: 'eyebrow' }, `${KIND[r.kind]} · ${REPORT_REASONS[r.reason] || r.reason}`),
+    h('p', { class: 'eyebrow' }, `${KIND[r.kind]} · ${r.reason === 'blocked' ? 'Blocked by someone (automatic)' : REPORT_REASONS[r.reason] || r.reason}`),
     h('p', {},
       h('strong', {}, r.reported_name), r.reported_is_bartender ? ' (bartender)' : '',
       r.reports_against > 1 ? h('span', { class: 'badge' }, `${r.reports_against} reports`) : null,

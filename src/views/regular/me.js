@@ -5,7 +5,8 @@ import { h, screen, backLink, actionButton, confirmDialog } from '../../lib/dom.
 import { supabase } from '../../supabase.js';
 import { me, uid, loadMe } from '../../state.js';
 import { compressImage, uploadPhoto, photoUrl } from '../../lib/images.js';
-import { MONTHS, daysInMonth } from '../../lib/time.js';
+import { MONTHS, daysInMonth, fmtDate } from '../../lib/time.js';
+import { navigate } from '../../router.js';
 import { toast, oops } from '../../lib/toast.js';
 import { avatar } from './home.js';
 import { deleteAccountSection } from '../account.js';
@@ -19,8 +20,36 @@ export async function loadMyDetails() {
   return data;
 }
 
+// Bartenders I blocked (migration 0014). Their profiles are hidden from me, so the names come from an RPC.
+async function loadBlockedBartenders() {
+  const { data, error } = await supabase.rpc('my_blocked_bartenders');
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+function blockedBartendersSection(blocked) {
+  if (!blocked.length) return null;
+  return h('section', { 'aria-labelledby': 'blocked-h' },
+    h('h2', { id: 'blocked-h' }, 'Blocked bartenders'),
+    h('p', { class: 'help' }, 'Only you can see this list. Unblocking doesn’t follow them again; you’d need a new code.'),
+    h('ul', { class: 'plain-list stack-tight' }, blocked.map((b) => h('li', { class: 'card row' },
+      h('span', { class: 'grow' }, h('strong', {}, b.display_name), h('span', { class: 'help block' }, `Blocked ${fmtDate(b.blocked_at)}`)),
+      actionButton('Unblock', async () => {
+        const ok = await confirmDialog({
+          title: `Unblock ${b.display_name}?`,
+          body: `You won’t follow them again automatically. You’d need a new code or link from ${b.display_name}.`,
+          confirmText: 'Unblock', cancelText: 'Cancel',
+        });
+        if (!ok) return;
+        const { error } = await supabase.rpc('unblock_bartender', { p_bartender: b.bartender_id });
+        if (error) return oops(error);
+        toast(`${b.display_name} is unblocked`);
+        navigate('/me', { replace: true });
+      }, { class: 'btn btn-small btn-ghost' })))));
+}
+
 export async function regularProfileView() {
-  let details = await loadMyDetails();
+  let [details, blocked] = await Promise.all([loadMyDetails(), loadBlockedBartenders()]);
   const photo = await photoUrl(BUCKET, details?.photo_path);
 
   // Insert the row the first time, update it after that.
@@ -134,6 +163,7 @@ export async function regularProfileView() {
     h('section', { class: 'center stack' }, photoBox, file, photoLabel, removeBtn),
     form,
     h('p', { class: 'help' }, 'Only bartenders you follow can see your photo, usual and birthday. Other regulars never do.'),
+    blockedBartendersSection(blocked),
     me.bartender ? null : deleteAccountSection(), // bartenders delete from My bartender profile & bars
   );
 }
