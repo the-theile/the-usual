@@ -1,4 +1,4 @@
--- The Usual — pinned post test suite (migration 0011).
+-- The Usual — pinned post test suite (migration 0015).
 -- Runs in one transaction and ROLLS BACK, so it is safe on a real project:
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/pinned_post_test.sql
 -- Any failure raises "FAIL: ..." and aborts. Success ends with "ALL PINNED POST TESTS PASSED".

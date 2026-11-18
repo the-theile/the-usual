@@ -10,6 +10,7 @@ import { timeAgo } from '../lib/time.js';
 import { photoUrls } from '../lib/images.js';
 import { toast, oops } from '../lib/toast.js';
 import { avatar, postCard } from './regular/home.js';
+import { reportButton } from '../lib/report.js';
 
 export const REACTIONS = [
   { key: 'cheers', emoji: '🍻', label: 'Cheers' },
@@ -131,7 +132,8 @@ function messageItem(m, { mine, authorName, open, onDeleted }) {
           li.remove();
           onDeleted?.();
           toast('Message deleted');
-        }, { class: 'btn btn-small btn-ghost' })) : null,
+        }, { class: 'btn btn-small btn-ghost' }))
+        : h('div', { class: 'msg-actions' }, reportButton('reply', m.id, authorName)),
     ]);
   }
 
@@ -197,7 +199,7 @@ function conversation({ messages, postId, regularId, open, otherName, placeholde
 
 async function loadPost(id) {
   const { data: p } = await supabase.from('posts')
-    .select('id, bartender_id, body, photo_path, created_at, visibility, bartenders(public_id, photo_path, profiles!bartenders_id_fkey(display_name))')
+    .select('id, bartender_id, body, photo_path, created_at, visibility, bar:bars!posts_bar_fkey(name), bartenders(public_id, photo_path, profiles!bartenders_id_fkey(display_name))')
     .eq('id', id).maybeSingle();
   return p;
 }

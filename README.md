@@ -6,7 +6,7 @@ A mobile-first web app built with plain JavaScript and Vite, with Supabase for s
 
 ## What's in Version 1
 
-- Sign-in with a phone number and a one-time SMS code. Phone numbers are never shown to anyone.
+- Sign-in with a phone number and a one-time SMS code. Phone numbers are never shown to anyone. Before the code is sent, people tick two boxes: legal drinking age, and agreeing to the Terms (zero tolerance for objectionable content and abusive users).
 - **Bartenders:** photo, name, bio, the bars they work at.
 - **Invite a regular:** a QR code, today's spoken code (e.g. `TIKI-MOON-42`, changes at 5am local time) and a copy-able link that lasts 7 days. All three connect the regular instantly.
 - **Posts:** text with an optional photo. Photos are resized and re-encoded in the browser, which also removes GPS/EXIF data. Each post is "Only my regulars" (the default) or "Public", and the bartender can switch it later. Public posts show on the bartender's page to non-regulars while the schedule is set to "Anyone with my link". Viewers must be signed in, and blocked people never see them. Non-regulars can read a public post and see its reaction counts, but only regulars can react or reply.
@@ -16,10 +16,16 @@ A mobile-first web app built with plain JavaScript and Vite, with Supabase for s
 - **Schedule privacy:** "Only my regulars" or "Anyone with my link" (signed-in users only).
 - **Regular home:** who's working tonight, then recent posts.
 - **Reactions & replies:** regulars react to a post (🍻 ❤️ 😂 🔥 👀 👏, one each) and can reply privately. Regulars see reaction counts only; the bartender sees who reacted. Each reply is a private conversation between that regular and the bartender, who can answer (20 messages max per conversation). Senders can edit or delete their own messages. Reacting and replying close 7 days after a post. The bartender's home shows a "new" badge.
-- **Regular profiles:** regulars can add a photo, "my usual" (their go-to drink) and a birthday (month + day, no year) on **My profile**. Only the bartenders they follow can see these, plus a bartender who blocked them. Other regulars never do, and neither do a bartender-regular's own regulars. The regular home suggests setting this up once they follow someone.
+- **Regular profiles:** regulars can add a photo, "my usual" (their go-to drink) and a birthday (month + day, no year) on **My profile** (called **My regular profile** for bartenders, whose bartender page is a separate **My bartender profile & bars**). Only the bartenders they follow can see these, plus a bartender who blocked them. Other regulars never do, and neither do a bartender-regular's own regulars. The regular home suggests setting this up once they follow someone.
 - **For bartenders:** My regulars shows each regular's photo and usual. Tapping a regular opens their page, where the bartender can keep a **private note** (only that bartender ever sees it). Their home shows **birthdays this week**, and the reactions & replies screen shows faces and usual drinks.
-- **Delete my account:** at the bottom of My profile (or My profile & bars for bartenders). It removes the person's photos, then everything else they added, and signs them out. It can't be undone.
-- **Silent blocking,** enforced in the database (RLS): the blocked person loses posts, schedule, profile and photos, and codes and links stop working for them. They are never told.
+- **Delete my account:** at the bottom of My profile (or My bartender profile & bars for bartenders). It removes the person's photos, then everything else they added, and signs them out. It can't be undone.
+- **Silent blocking,** enforced in the database (RLS): the blocked person loses posts, schedule, profile and photos, and codes and links stop working for them. They are never told. Regulars can block a bartender too (**Block** on the bartender's page): it unfollows, hides that bartender's page, schedule, updates and photos, hides the regular's profile from the bartender, and stops codes and links reconnecting them until the regular unblocks on **My profile**. To the bartender it looks like an unfollow. Every block (either way) opens an automatic report in the moderator queue.
+- **Language filter:** the database rejects names, bios, bar names, updates, replies, "my usual" and shift notes that contain a term from `private.blocked_terms` (slurs; whole words, with a simple leetspeak pass). Add terms in the SQL editor: `insert into private.blocked_terms (term) values ('someword');`
+- **Reporting:** a **Report** button on every update (except your own), on the other person's reply messages, on a bartender's page and on a bartender's regular page (which then offers to block them too). The reporter picks a reason and can add details. The reported person is never told. A report keeps a copy of the text (not photos), so the evidence survives if the author deletes it. Closed reports, the moderator log and ended suspensions are deleted after 12 months (nightly with `pg_cron`, and whenever a report is resolved). Max 20 reports a day per person.
+- **Moderator tools** (`#/mod`, shown in the home menu to moderators only):
+  - **Reports:** a queue of open reports, oldest first, with who was reported (and how many reports they have), who reported, the reason and the copied content. A moderator can **remove** the post or reply (and its photo), **suspend** the person (1, 7 or 30 days, or until lifted), both, or **dismiss**. Suspending signs them out and blocks sign-in. Removing a post closes the other open reports about it.
+  - **Suspended** people, with Unsuspend, and a log of every moderator action.
+  - **Metrics** (`#/mod/metrics`): people, weekly active, bartender funnel (page → shift → first regular → posting → 5+ regulars), regulars per bartender, how regulars join (QR / spoken code / link), updates and response rate, safety (reports, blocks, suspensions), and a 14-day chart. Aggregates only.
 
 ## Project layout
 
@@ -64,11 +70,22 @@ npm run build      # production build in dist/
 
 The QR codes and invite links use the site's own address, so they work on whatever domain Vercel gives you.
 
-### 3. Run the privacy tests on the live database (optional, recommended)
+### 3. Make yourself a moderator
+
+Moderators are listed in `private.moderators`, which the API can't reach. In the Supabase **SQL editor**, after signing in to the app once:
+
+```sql
+insert into private.moderators (user_id)
+select id from auth.users where phone = '15551234567';   -- your number, digits only, with country code
+```
+
+Sign out and back in (or reload) and **Moderator tools** appears in the home menu. To remove a moderator, `delete from private.moderators where user_id = '…';`.
+
+### 4. Run the privacy tests on the live database (optional, recommended)
 
 Paste `supabase/tests/privacy_test.sql` into the Supabase **SQL editor** and run it. It creates throwaway test users, checks 74 privacy rules and then **rolls everything back**. It should end without a `FAIL:` error.
 
-Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes), `supabase/tests/delete_account_test.sql` (account deletion), `supabase/tests/pinned_post_test.sql` (pinned updates) and `supabase/tests/checkins_test.sql` (I'm coming tonight).
+Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactions and replies), `supabase/tests/post_visibility_test.sql` (26 checks for public vs. regulars-only posts) `supabase/tests/regular_profiles_test.sql` (62 checks for regular profiles, photos and bartender notes) `supabase/tests/delete_account_test.sql` (account deletion) and `supabase/tests/moderation_test.sql` (52 checks for reports, moderator tools, metrics and the 12-month clean-up), `supabase/tests/post_bar_tag_test.sql` (bar tags on posts), `supabase/tests/pinned_post_test.sql` (pinned updates) and `supabase/tests/checkins_test.sql` (I'm coming tonight).
 
 ## Security notes
 
@@ -78,12 +95,13 @@ Do the same with `supabase/tests/post_responses_test.sql` (54 checks for reactio
 - QR codes and links use 122-bit random tokens.
 - A regular's photo, usual and birthday live in `regular_details`, not `profiles`, because `profiles` rows are also readable by a bartender's regulars.
 - Photos are in private buckets, served by short-lived signed URLs under the same rules as the posts and profiles they belong to.
+- Reports, suspensions, the moderator list and the action log live in the `private` schema. Clients only reach them through `SECURITY DEFINER` functions, and every `mod_*` function checks `private.is_moderator()` first. `am_i_moderator()` only ever answers about the caller.
+- A suspension sets `auth.users.banned_until` and deletes the person's sessions. An access token already issued keeps working until it expires (up to an hour).
 
 ## Planned later (the schema is ready)
 
 - **Direct messages:** `connections.messaging_enabled`. The bartender turns messaging on per regular.
 - **Notification bell:** `connections.notify`, plus a `push_subscriptions` table.
-- **Report button:** a new `reports` table.
 - **Paid promotion:** a shared `venues` table and promoted posts.
 
 New tables in `public` automatically get Supabase's default grants. Always add `revoke`/`grant` and RLS policies in the same migration, following the pattern in `20261031000003_rls.sql`.

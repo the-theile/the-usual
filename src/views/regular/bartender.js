@@ -1,4 +1,4 @@
-// #/b/:public_id — a bartender's page as a regular (or public-schedule viewer) sees it.
+// #/b/:public_id (or #/tender/:handle) — a bartender's page as a regular (or public-schedule viewer) sees it.
 import { h, screen, backLink, actionButton, confirmDialog } from '../../lib/dom.js';
 import { supabase } from '../../supabase.js';
 import { uid } from '../../state.js';
@@ -8,6 +8,36 @@ import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { avatar, postCard, othersComing } from './home.js';
 import { loadRegularResponses, regularPostFooter } from '../responses.js';
+import { reportButton } from '../../lib/report.js';
+
+// Same message whether the page doesn't exist or this person can't see it.
+function pageNotFound() {
+  return screen(backLink('#/'), h('h1', {}, 'Page not found'),
+    h('p', { class: 'lead' }, 'This page isn’t available. If you know this bartender, ask them for today’s code.'),
+    h('a', { class: 'btn btn-primary', href: '#/code' }, 'I have a code'));
+}
+
+// Full-size photo in a dialog. Tap anywhere (or Close / Esc) to dismiss.
+function viewPhoto(url, alt) {
+  const dlg = h('dialog', { class: 'dialog photo-viewer', 'aria-label': alt },
+    h('img', { src: url, alt }),
+    h('button', { type: 'button', class: 'btn btn-ghost' }, 'Close'));
+  dlg.addEventListener('click', () => dlg.close());
+  dlg.addEventListener('close', () => dlg.remove());
+  document.body.append(dlg);
+  dlg.showModal();
+}
+
+// ===== #/tender/:handle — the same page, by the bartender's chosen link =====
+// resolve_handle applies the page's own visibility rules, and also accepts old handles.
+export async function tenderPageView(ctx) {
+  const { data, error } = await supabase.rpc('resolve_handle', { p_handle: ctx.params.handle });
+  if (error) throw error;
+  const row = data?.[0];
+  if (!row) return pageNotFound();
+  if (row.handle && row.handle !== ctx.params.handle) history.replaceState(null, '', `#/tender/${row.handle}`);
+  return bartenderPageView({ ...ctx, params: { pid: row.public_id } });
+}
 
 export async function bartenderPageView({ params }) {
   // RLS returns nothing if this person can't see the bartender (not connected and
@@ -15,16 +45,12 @@ export async function bartenderPageView({ params }) {
   const { data: b } = await supabase.from('bartenders')
     .select('id, public_id, bio, photo_path, timezone, schedule_visibility, profiles!bartenders_id_fkey(display_name)')
     .eq('public_id', params.pid).maybeSingle();
-  if (!b) {
-    return screen(backLink('#/'), h('h1', {}, 'Page not found'),
-      h('p', { class: 'lead' }, 'This page isn’t available. If you know this bartender, ask them for today’s code.'),
-      h('a', { class: 'btn btn-primary', href: '#/code' }, 'I have a code'));
-  }
+  if (!b) return pageNotFound();
   const name = b.profiles?.display_name || 'Bartender';
   const isMe = b.id === uid();
   const today = barDay(b.timezone);
 
-  const POST_COLS = 'id, bartender_id, body, photo_path, created_at, visibility, pinned_at';
+  const POST_COLS = 'id, bartender_id, body, photo_path, created_at, visibility, pinned_at, bar:bars!posts_bar_fkey(name)';
   const [barsRes, schedRes, postsRes, pinnedRes, connRes, checkinRes] = await Promise.all([
     supabase.from('bars').select('id, name, area').eq('bartender_id', b.id).order('sort'),
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: addDays(today, 13) }),
@@ -53,7 +79,10 @@ export async function bartenderPageView({ params }) {
     backLink('#/'),
     isMe ? h('p', { class: 'card note' }, 'This is how your page looks to your regulars.') : null,
     h('header', { class: 'profile-head' },
-      avatar(avatarUrl, name, 'avatar-xl'),
+      avatarUrl
+        ? h('button', { type: 'button', class: 'avatar-btn', 'aria-label': `View ${name}’s photo`,
+            onClick: () => viewPhoto(avatarUrl, `Photo of ${name}`) }, avatar(avatarUrl, name, 'avatar-lg'))
+        : avatar(null, name, 'avatar-lg'),
       h('h1', {}, name),
       b.bio ? h('p', { class: 'lead' }, b.bio) : null,
     ),
@@ -71,8 +100,8 @@ export async function bartenderPageView({ params }) {
       h('h2', { id: 'coming-h' }, 'Coming up'),
       later.length
         ? h('ul', { class: 'plain-list schedule-list' }, later.map((s) => h('li', {},
-            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today)),
-            h('span', {}, h('strong', {}, s.bar_name), ' · ', fmtShift(s.start_time, s.end_time),
+            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today, { short: true })),
+            h('span', {}, h('strong', { class: 'block' }, s.bar_name), h('span', { class: 'shift-time' }, fmtShift(s.start_time, s.end_time)),
               s.note ? h('span', { class: 'help block' }, s.note) : null))))
         : h('p', { class: 'muted' }, 'No shifts posted for the next two weeks.'),
     ),
@@ -117,10 +146,12 @@ export async function bartenderPageView({ params }) {
           navigate('/', { replace: true });
         }, { class: 'btn btn-ghost' })
       : null,
+    isMe ? null : reportButton('person', b.id, name, { label: `Report ${name}`, className: 'btn btn-ghost' }),
+    isMe ? null : actionButton(`Block ${name}`, () => blockBartenderFlow(b.id, name), { class: 'btn btn-ghost' }),
   );
 }
 
-// "I'm coming tonight" + how many other regulars are (never who). Migration 0012.
+// "I'm coming tonight" + how many other regulars are (never who). Migration 0016.
 function comingTonight(b, name, row) {
   const state = { me: !!row?.me, others: row?.others || 0 };
   const box = h('div', { class: 'checkin stack-tight' });
@@ -141,4 +172,19 @@ function comingTonight(b, name, row) {
   );
   draw();
   return box;
+}
+
+// Blocking unfollows and hides the bartender everywhere (migration 0014). The
+// bartender isn't told (it looks like an unfollow); moderators are.
+async function blockBartenderFlow(id, name) {
+  const ok = await confirmDialog({
+    title: `Block ${name}?`,
+    body: `${name} won’t be told. You’ll stop following them, their page and updates disappear for you, they can’t see your profile, and their codes won’t work until you unblock them (My profile). Our moderators are notified so they can check for abuse.`,
+    confirmText: `Block ${name}`, danger: true, cancelText: 'Cancel',
+  });
+  if (!ok) return;
+  const { error } = await supabase.rpc('block_bartender', { p_bartender: id });
+  if (error) return oops(error);
+  toast(`${name} is blocked`);
+  navigate('/', { replace: true });
 }

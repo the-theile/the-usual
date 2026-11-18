@@ -6,6 +6,7 @@ import { fmtDate, fmtBirthday } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { avatar } from '../regular/home.js';
+import { reportButton } from '../../lib/report.js';
 
 const MAX_NOTE = 500;
 
@@ -18,7 +19,7 @@ export async function loadMyRegulars() {
 async function blockFlow(r) {
   const ok = await confirmDialog({
     title: `Block ${r.display_name}?`,
-    body: `${r.display_name} won’t be told. They’ll stop seeing your updates, schedule and profile, and your codes and links won’t work for them.`,
+    body: `${r.display_name} won’t be told. They’ll stop seeing your updates, schedule and profile, and your codes and links won’t work for them. Our moderators are notified so they can check for abuse.`,
     confirmText: `Block ${r.display_name}`, danger: true, cancelText: 'Cancel',
   });
   if (!ok) return false;
@@ -140,6 +141,11 @@ export async function regularDetailView({ params }) {
 
     h('section', { class: 'card' }, form),
 
+    // After reporting, offer to block too (blockFlow asks first).
+    reportButton('person', r.regular_id, r.display_name, {
+      label: `Report ${r.display_name}`, className: 'btn btn-ghost',
+      onDone: async () => { if (await blockFlow(r)) navigate('/regulars', { replace: true }); },
+    }),
     actionButton(`Block ${r.display_name}`, async () => {
       if (await blockFlow(r)) navigate('/regulars', { replace: true });
     }, { class: 'btn btn-danger-outline' }),

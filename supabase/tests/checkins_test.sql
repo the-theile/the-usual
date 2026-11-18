@@ -1,4 +1,4 @@
--- The Usual — "I'm coming tonight" test suite (migration 0012).
+-- The Usual — "I'm coming tonight" test suite (migration 0016).
 -- Runs in one transaction and ROLLS BACK, so it is safe on a real project:
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/checkins_test.sql
 -- Any failure raises "FAIL: ..." and aborts. Success ends with "ALL CHECK-IN TESTS PASSED".
