@@ -1,6 +1,6 @@
 import { h, screen, clear, actionButton } from '../lib/dom.js';
 import { supabase } from '../supabase.js';
-import { me, uid, loadMe, getPendingInvite, setMode } from '../state.js';
+import { me, uid, loadMe, getPendingInvite, setMode, takeReturnTo } from '../state.js';
 import { navigate } from '../router.js';
 import { oops } from '../lib/toast.js';
 import { localTimezone } from '../lib/time.js';
@@ -59,11 +59,12 @@ export async function onboardingView() {
       h('div', { class: 'stack' },
         actionButton(h('span', { class: 'two-line' }, h('strong', {}, "I'm a regular"), h('span', {}, 'I want to know where my bartenders are working')), async () => {
           setMode('regular');
-          navigate('/', { replace: true });
+          navigate(takeReturnTo() || '/', { replace: true });
         }, { class: 'btn btn-choice', 'data-autofocus': '' }),
         actionButton(h('span', { class: 'two-line' }, h('strong', {}, "I'm a bartender"), h('span', {}, 'I want my regulars to know where I am')), async () => {
           try {
             await createBartenderProfile();
+            takeReturnTo(); // setting up their own page comes first; drop any saved link
             navigate('/profile?setup=1', { replace: true });
           } catch (e) { oops(e); }
         }, { class: 'btn btn-choice' }),

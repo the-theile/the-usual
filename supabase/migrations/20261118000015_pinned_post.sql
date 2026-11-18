@@ -1,4 +1,4 @@
--- The Usual — 0011: one pinned update per bartender
+-- The Usual — 0015: one pinned update per bartender
 --
 -- A pinned post stays at the top of the bartender's page, and its first line
 -- shows on their card on the regular home screen, until the bartender pins

@@ -35,6 +35,10 @@ export async function joinView({ query }) {
   // Signed in: connect instantly.
   const { data, error } = await supabase.rpc('redeem_invite', { p_input: token });
   setPendingInvite(null);
+  if (error?.message?.includes('you_blocked_them')) {
+    return screen(h('h1', {}, 'You blocked this bartender'), h('p', {}, 'To follow them, unblock them on My profile first, then open the invite again.'),
+      h('a', { class: 'btn btn-primary btn-xl', href: '#/me' }, 'Go to My profile'));
+  }
   if (error) throw error;
   if (data?.reason === 'self') {
     return screen(h('h1', {}, "That's your own invite"), h('p', {}, 'Share it with your regulars so they can follow you.'),

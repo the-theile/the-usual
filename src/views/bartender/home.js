@@ -2,22 +2,24 @@ import { h, screen, actionButton, confirmDialog } from '../../lib/dom.js';
 import { supabase } from '../../supabase.js';
 import { me, setMode } from '../../state.js';
 import { navigate } from '../../router.js';
-import { barDay, fmtShift, timeAgo, upcomingBirthdays, dayLabel } from '../../lib/time.js';
+import { barDay, fmtShift, upcomingBirthdays, dayLabel } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { loadMyPostActivity, activityLink } from '../responses.js';
 import { loadMyRegulars } from './regulars.js';
-import { avatar } from '../regular/home.js';
+import { avatar, postWhen } from '../regular/home.js';
+import { installTipCard, installMenuRow } from '../../lib/install.js';
 
 export async function bartenderHomeView() {
   const b = me.bartender;
   const today = barDay(b.timezone);
 
+  const POST_COLS = 'id, body, photo_path, created_at, visibility, pinned_at, bar:bars!posts_bar_fkey(name)';
   const [tonightRes, postsRes, pinnedRes, barsRes, regulars] = await Promise.all([
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: today }),
-    supabase.from('posts').select('id, body, photo_path, created_at, visibility, pinned_at').eq('bartender_id', b.id)
+    supabase.from('posts').select(POST_COLS).eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(10),
-    supabase.from('posts').select('id, body, photo_path, created_at, visibility, pinned_at').eq('bartender_id', b.id)
+    supabase.from('posts').select(POST_COLS).eq('bartender_id', b.id)
       .not('pinned_at', 'is', null).maybeSingle(),
     supabase.from('bars').select('id').eq('bartender_id', b.id).limit(1),
     loadMyRegulars().catch((e) => { console.error(e); return []; }),
@@ -66,15 +68,19 @@ export async function bartenderHomeView() {
         )
       : null,
 
+    installTipCard(),
+
     h('nav', { class: 'menu', 'aria-label': 'More' },
       h('a', { class: 'menu-row', href: '#/schedule' }, 'My schedule', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: '#/regulars' }, 'My regulars', h('span', { 'aria-hidden': 'true' }, '›')),
-      h('a', { class: 'menu-row', href: '#/profile' }, 'My profile & bars', h('span', { 'aria-hidden': 'true' }, '›')),
+      h('a', { class: 'menu-row', href: '#/profile' }, 'My bartender profile & bars', h('span', { 'aria-hidden': 'true' }, '›')),
       h('a', { class: 'menu-row', href: `#/b/${b.public_id}` }, 'See my page as regulars do', h('span', { 'aria-hidden': 'true' }, '›')),
+      me.moderator ? h('a', { class: 'menu-row', href: '#/mod' }, 'Moderator tools', h('span', { 'aria-hidden': 'true' }, '›')) : null,
+      installMenuRow(),
       h('button', {
         type: 'button', class: 'menu-row',
         onClick: () => { setMode('regular'); navigate('/'); },
-      }, 'Bartenders I follow', h('span', { 'aria-hidden': 'true' }, '›')),
+      }, 'Switch to my regular side', h('span', { 'aria-hidden': 'true' }, '›')),
     ),
 
     h('section', { 'aria-labelledby': 'my-posts' },
@@ -103,7 +109,7 @@ function ownPost(p, url, activity) {
       navigate('/'); // redraw so the pinned update moves to the top
     }, { class: 'btn btn-small btn-ghost' }),
     h('div', { class: 'post-meta' },
-      h('span', { class: 'muted' }, timeAgo(p.created_at)),
+      h('span', { class: 'muted' }, postWhen(p)),
       actionButton('Delete', async () => {
         const ok = await confirmDialog({ title: 'Delete this update?', body: 'Your regulars will no longer see it.', confirmText: 'Delete', danger: true });
         if (!ok) return;

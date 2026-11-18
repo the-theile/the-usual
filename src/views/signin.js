@@ -1,6 +1,6 @@
 import { h, screen, backLink, clear } from '../lib/dom.js';
 import { supabase } from '../supabase.js';
-import { loadMe, me, getPendingInvite } from '../state.js';
+import { loadMe, me, getPendingInvite, takeReturnTo } from '../state.js';
 import { navigate } from '../router.js';
 import { oops } from '../lib/toast.js';
 
@@ -18,9 +18,14 @@ function maskPhone(e164) {
   return `the number ending in ${e164.slice(-4)}`;
 }
 
+// Opens in a new tab so the sign-in flow isn't lost.
+const legalLink = (href, text) => h('a', { href, target: '_blank', rel: 'noopener' }, text);
+
 export async function signinView() {
   const root = screen();
   let phone = '';
+  let ofAge = false;
+  let agreed = false;
   let resendAt = 0;
 
   function stepPhone(errorText) {
@@ -31,16 +36,31 @@ export async function signinView() {
       'aria-describedby': 'phone-help',
     });
     const err = h('p', { class: 'error', role: 'alert' }, errorText || '');
+    const ageBox = h('input', { id: 'of-age', type: 'checkbox', required: true, checked: ofAge });
+    // App Review (guideline 1.2) wants the Terms actively agreed to before sign-in, not a passive line.
+    const termsBox = h('input', { id: 'agree-terms', type: 'checkbox', required: true, checked: agreed });
+    const submitBtn = h('button', { type: 'submit', class: 'btn btn-primary btn-xl', disabled: !(ofAge && agreed) }, 'Text me a code');
+    const sync = () => { ofAge = ageBox.checked; agreed = termsBox.checked; submitBtn.disabled = !(ofAge && agreed); };
+    ageBox.addEventListener('change', sync);
+    termsBox.addEventListener('change', sync);
     const form = h('form', { class: 'stack', novalidate: true },
       h('label', { for: 'phone' }, 'Your mobile number'),
       input,
       h('p', { id: 'phone-help', class: 'help' },
         "We'll text you a 6-digit code. Nobody else ever sees your number. Outside the US or Canada? Start with + and your country code."),
+      h('label', { class: 'check', for: 'of-age' }, ageBox,
+        h('span', {}, 'I’m of legal drinking age: 21 or older in the US, or the legal drinking age where I live.')),
+      h('label', { class: 'check', for: 'agree-terms' }, termsBox,
+        h('span', {}, 'I agree to the ', legalLink('/terms', 'Terms'), ', including zero tolerance for abusive or objectionable content, and the ',
+          legalLink('/privacy', 'Privacy Policy'), '.')),
       err,
-      h('button', { type: 'submit', class: 'btn btn-primary btn-xl' }, 'Text me a code'),
+      submitBtn,
+      h('p', { class: 'help' }, 'We’ll text you a one-time sign-in code. Message and data rates may apply.'),
     );
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (!ageBox.checked) { err.textContent = 'Please confirm you’re of legal drinking age.'; ageBox.focus(); return; }
+      if (!termsBox.checked) { err.textContent = 'Please agree to the Terms to continue.'; termsBox.focus(); return; }
       const e164 = toE164(input.value);
       if (!e164) { err.textContent = 'Please check the number. It should look like (555) 123-4567.'; input.focus(); return; }
       phone = e164;
@@ -58,7 +78,9 @@ export async function signinView() {
       resendAt = Date.now() + 30_000;
       stepCode();
     });
-    root.append(backLink('#/welcome'), h('h1', {}, 'Sign in'), form);
+    root.append(backLink('#/welcome'), h('h1', {}, 'Sign in'),
+      h('p', { class: 'help' }, 'New here? Same steps. Enter your number and the code we text you, and we’ll sign you in or create your account.'),
+      form);
     queueMicrotask(() => input.focus());
   }
 
@@ -94,7 +116,7 @@ export async function signinView() {
       const pending = getPendingInvite();
       if (!me.profile) navigate('/onboarding', { replace: true });
       else if (pending) navigate(`/join?t=${encodeURIComponent(pending)}`, { replace: true });
-      else navigate('/', { replace: true });
+      else navigate(takeReturnTo() || '/', { replace: true });
     }
     input.addEventListener('input', () => {
       input.value = input.value.replace(/\D/g, '').slice(0, 6);
