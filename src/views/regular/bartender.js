@@ -17,6 +17,17 @@ function pageNotFound() {
     h('a', { class: 'btn btn-primary', href: '#/code' }, 'I have a code'));
 }
 
+// Full-size photo in a dialog. Tap anywhere (or Close / Esc) to dismiss.
+function viewPhoto(url, alt) {
+  const dlg = h('dialog', { class: 'dialog photo-viewer', 'aria-label': alt },
+    h('img', { src: url, alt }),
+    h('button', { type: 'button', class: 'btn btn-ghost' }, 'Close'));
+  dlg.addEventListener('click', () => dlg.close());
+  dlg.addEventListener('close', () => dlg.remove());
+  document.body.append(dlg);
+  dlg.showModal();
+}
+
 // ===== #/tender/:handle — the same page, by the bartender's chosen link =====
 // resolve_handle applies the page's own visibility rules, and also accepts old handles.
 export async function tenderPageView(ctx) {
@@ -42,7 +53,7 @@ export async function bartenderPageView({ params }) {
   const [barsRes, schedRes, postsRes, connRes] = await Promise.all([
     supabase.from('bars').select('id, name, area').eq('bartender_id', b.id).order('sort'),
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: addDays(today, 13) }),
-    supabase.from('posts').select('id, bartender_id, body, photo_path, created_at, visibility').eq('bartender_id', b.id)
+    supabase.from('posts').select('id, bartender_id, body, photo_path, created_at, visibility, bar:bars!posts_bar_fkey(name)').eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(20),
     supabase.from('connections').select('bartender_id').eq('bartender_id', b.id).eq('regular_id', uid()).maybeSingle(),
   ]);
@@ -63,7 +74,10 @@ export async function bartenderPageView({ params }) {
     backLink('#/'),
     isMe ? h('p', { class: 'card note' }, 'This is how your page looks to your regulars.') : null,
     h('header', { class: 'profile-head' },
-      avatar(avatarUrl, name, 'avatar-xl'),
+      avatarUrl
+        ? h('button', { type: 'button', class: 'avatar-btn', 'aria-label': `View ${name}’s photo`,
+            onClick: () => viewPhoto(avatarUrl, `Photo of ${name}`) }, avatar(avatarUrl, name, 'avatar-lg'))
+        : avatar(null, name, 'avatar-lg'),
       h('h1', {}, name),
       b.bio ? h('p', { class: 'lead' }, b.bio) : null,
     ),
@@ -80,8 +94,8 @@ export async function bartenderPageView({ params }) {
       h('h2', { id: 'coming-h' }, 'Coming up'),
       later.length
         ? h('ul', { class: 'plain-list schedule-list' }, later.map((s) => h('li', {},
-            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today)),
-            h('span', {}, h('strong', {}, s.bar_name), ' · ', fmtShift(s.start_time, s.end_time),
+            h('span', { class: 'day-label' }, dayLabel(s.occurrence_date, today, { short: true })),
+            h('span', {}, h('strong', { class: 'block' }, s.bar_name), h('span', { class: 'shift-time' }, fmtShift(s.start_time, s.end_time)),
               s.note ? h('span', { class: 'help block' }, s.note) : null))))
         : h('p', { class: 'muted' }, 'No shifts posted for the next two weeks.'),
     ),
@@ -127,5 +141,21 @@ export async function bartenderPageView({ params }) {
         }, { class: 'btn btn-ghost' })
       : null,
     isMe ? null : reportButton('person', b.id, name, { label: `Report ${name}`, className: 'btn btn-ghost' }),
+    isMe ? null : actionButton(`Block ${name}`, () => blockBartenderFlow(b.id, name), { class: 'btn btn-ghost' }),
   );
+}
+
+// Blocking unfollows and hides the bartender everywhere (migration 0014). The
+// bartender isn't told (it looks like an unfollow); moderators are.
+async function blockBartenderFlow(id, name) {
+  const ok = await confirmDialog({
+    title: `Block ${name}?`,
+    body: `${name} won’t be told. You’ll stop following them, their page and updates disappear for you, they can’t see your profile, and their codes won’t work until you unblock them (My profile). Our moderators are notified so they can check for abuse.`,
+    confirmText: `Block ${name}`, danger: true, cancelText: 'Cancel',
+  });
+  if (!ok) return;
+  const { error } = await supabase.rpc('block_bartender', { p_bartender: id });
+  if (error) return oops(error);
+  toast(`${name} is blocked`);
+  navigate('/', { replace: true });
 }

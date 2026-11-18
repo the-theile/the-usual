@@ -9,6 +9,7 @@ import { h, screen } from './lib/dom.js';
 import { initInstall } from './lib/install.js';
 
 import { welcomeView } from './views/welcome.js';
+import { sampleView } from './views/sample.js';
 import { signinView } from './views/signin.js';
 import { onboardingView, becomeBartenderView } from './views/onboarding.js';
 import { joinView } from './views/join.js';
@@ -30,6 +31,7 @@ import { modReportsView, modMetricsView } from './views/mod.js';
 const B = { bartender: true };
 route('/', async (ctx) => (me.bartender && getMode() !== 'regular' ? bartenderHomeView(ctx) : regularHomeView(ctx)), { title: 'Home' });
 route('/welcome', welcomeView, { public: true });
+route('/sample', sampleView, { public: true, title: 'Sample bartender' });
 route('/signin', signinView, { public: true, title: 'Sign in' });
 route('/join', joinView, { public: true, title: 'Invite' });
 route('/onboarding', onboardingView, { noProfile: true, title: 'Welcome' });
@@ -59,10 +61,21 @@ const app = document.getElementById('app');
 const BASE_TITLE = document.title; // full SEO title from index.html, used for /welcome and untitled routes
 let renderSeq = 0;
 
+// Unmatched hash routes (e.g. #/does-not-exist). Public, so it shows whether or not you're signed in.
+const NOT_FOUND = {
+  params: {},
+  opts: { public: true, title: 'Page not found' },
+  view: () => screen(
+    h('h1', {}, 'Page not found'),
+    h('p', {}, 'We couldn’t find that page. The link may be old or mistyped.'),
+    h('a', { class: 'btn btn-primary', href: '#/welcome', 'data-autofocus': '' }, 'Back to the welcome page'),
+  ),
+};
+
 async function render() {
   const seq = ++renderSeq;
   const { path, query } = parseHash();
-  const r = match(path) || match('/');
+  const r = match(path) || NOT_FOUND;
   const signedIn = !!me.session;
 
   // Remember a real destination (not home) so sign-in / onboarding can return to it.

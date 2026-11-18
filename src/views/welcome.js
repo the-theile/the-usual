@@ -18,6 +18,7 @@ export async function welcomeView() {
     pending ? h('p', { class: 'card note' }, 'You have an invite waiting. Sign in to accept it.') : null,
     toPage ? h('p', { class: 'card note' }, 'Sign in to see this bartender’s page. We’ll take you straight there.') : null,
     h('a', { class: 'btn btn-primary btn-xl', href: '#/signin', 'data-autofocus': '' }, 'Get started'),
+    h('a', { class: 'btn btn-ghost', href: '#/sample' }, 'See an example'),
     h('ul', { class: 'plain-list reassure' },
       h('li', {}, 'Nothing to download.'),
       h('li', {}, 'Sign in with a text message code. No password.'),
@@ -31,7 +32,8 @@ export async function welcomeView() {
       h('strong', {}, 'Regulars: '),
       'scan the code or open the link your bartender gives you. Your home screen shows who\'s working tonight and where, plus their latest posts.'),
     h('p', { class: 'help legal-links' },
-      h('a', { href: '/privacy' }, 'Privacy'), ' · ', h('a', { href: '/terms' }, 'Terms'), ' · ',
-      h('a', { href: 'mailto:cheers@gettheusual.bar' }, 'Contact')),
+      h('a', { href: '/privacy', target: '_blank', rel: 'noopener' }, 'Privacy'), ' · ',
+      h('a', { href: '/terms', target: '_blank', rel: 'noopener' }, 'Terms'), ' · ',
+      h('a', { href: 'mailto:cheers@gettheusual.bar' }, 'Contact'), ': cheers@gettheusual.bar'),
   );
 }

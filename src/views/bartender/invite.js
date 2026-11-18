@@ -37,6 +37,9 @@ export async function inviteView() {
         await navigator.clipboard.writeText(url);
       }
       toast('Invite link copied. It works for 7 days.');
+      // Show the copied link so the bartender can see where it points.
+      linkBox.append(h('p', { class: 'help' }, 'Copied this link. It works for 7 days.'),
+        h('input', { type: 'text', readonly: true, value: url, 'aria-label': 'Invite link' }));
     } catch (e) {
       // Clipboard blocked: show the link so it can be copied by hand.
       try {
@@ -59,6 +62,8 @@ export async function inviteView() {
     h('p', { class: 'invite-code', 'aria-label': `Code: ${data.code.split('-').join(', ')}` }, data.code),
     h('p', { class: 'help center' }, `Today’s code works until ${until}. You get a new one each day.`),
     actionButton('Copy invite link', copyLink, { class: 'btn btn-primary btn-xl' }),
+    h('p', { class: 'help center invite-url' }, `The QR code opens this link (works until ${until}): `,
+      h('span', {}, joinUrl(data.token))),
     linkBox,
     h('p', { class: 'help center' }, 'Send the link by text, email or however you like.'),
     actionButton('Code got out? Get new codes', async () => {

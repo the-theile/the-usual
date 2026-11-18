@@ -17,11 +17,16 @@ export function avatar(url, name, size = '') {
     : h('span', { class: `avatar avatar-initial ${size}`, 'aria-hidden': 'true' }, (name || '?').trim().charAt(0).toUpperCase());
 }
 
+// "The Garage · 2h ago" when the post names a bar, else just "2h ago".
+export function postWhen(p) {
+  return p.bar?.name ? `${p.bar.name} · ${timeAgo(p.created_at)}` : timeAgo(p.created_at);
+}
+
 export function postCard(p, { name, avatarUrl, photo, href, footer }) {
   return h('article', { class: 'card post' },
     h('a', { class: 'post-head', href },
       avatar(avatarUrl, name, 'avatar-sm'),
-      h('span', {}, h('strong', {}, name), h('span', { class: 'help block' }, timeAgo(p.created_at)))),
+      h('span', {}, h('strong', {}, name), h('span', { class: 'help block' }, postWhen(p)))),
     photo ? h('img', { class: 'post-photo', src: photo, alt: `Photo from ${name}`, loading: 'lazy' }) : null,
     p.body ? h('p', { class: 'post-body' }, p.body) : null,
     footer || null,
@@ -44,7 +49,7 @@ export async function regularHomeView() {
   const ids = bartenders.map((b) => b.bartender_id);
 
   const { data: posts } = ids.length
-    ? await supabase.from('posts').select('id, bartender_id, body, photo_path, created_at')
+    ? await supabase.from('posts').select('id, bartender_id, body, photo_path, created_at, bar:bars!posts_bar_fkey(name)')
         .in('bartender_id', ids).order('created_at', { ascending: false }).limit(30)
     : { data: [] };
 

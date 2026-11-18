@@ -27,11 +27,11 @@ export function isoWeekday(ymd) {
   return d === 0 ? 7 : d;
 }
 
-export function dayLabel(ymd, today) {
+export function dayLabel(ymd, today, { short = false } = {}) {
   if (ymd === today) return 'Tonight';
   if (ymd === addDays(today, 1)) return 'Tomorrow';
   return new Date(`${ymd}T12:00:00Z`).toLocaleDateString(undefined, {
-    timeZone: 'UTC', weekday: 'long', month: 'short', day: 'numeric',
+    timeZone: 'UTC', weekday: short ? 'short' : 'long', month: 'short', day: 'numeric',
   });
 }
 

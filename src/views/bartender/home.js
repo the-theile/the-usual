@@ -2,12 +2,12 @@ import { h, screen, actionButton, confirmDialog } from '../../lib/dom.js';
 import { supabase } from '../../supabase.js';
 import { me, setMode } from '../../state.js';
 import { navigate } from '../../router.js';
-import { barDay, fmtShift, timeAgo, upcomingBirthdays, dayLabel } from '../../lib/time.js';
+import { barDay, fmtShift, upcomingBirthdays, dayLabel } from '../../lib/time.js';
 import { photoUrls } from '../../lib/images.js';
 import { toast, oops } from '../../lib/toast.js';
 import { loadMyPostActivity, activityLink } from '../responses.js';
 import { loadMyRegulars } from './regulars.js';
-import { avatar } from '../regular/home.js';
+import { avatar, postWhen } from '../regular/home.js';
 import { installTipCard, installMenuRow } from '../../lib/install.js';
 
 export async function bartenderHomeView() {
@@ -16,7 +16,7 @@ export async function bartenderHomeView() {
 
   const [tonightRes, postsRes, barsRes, regulars] = await Promise.all([
     supabase.rpc('get_schedule', { p_bartenders: [b.id], p_from: today, p_to: today }),
-    supabase.from('posts').select('id, body, photo_path, created_at, visibility').eq('bartender_id', b.id)
+    supabase.from('posts').select('id, body, photo_path, created_at, visibility, bar:bars!posts_bar_fkey(name)').eq('bartender_id', b.id)
       .order('created_at', { ascending: false }).limit(10),
     supabase.from('bars').select('id').eq('bartender_id', b.id).limit(1),
     loadMyRegulars().catch((e) => { console.error(e); return []; }),
@@ -97,7 +97,7 @@ function ownPost(p, url, activity) {
     activityLink(p, activity),
     visibilityRow(p),
     h('div', { class: 'post-meta' },
-      h('span', { class: 'muted' }, timeAgo(p.created_at)),
+      h('span', { class: 'muted' }, postWhen(p)),
       actionButton('Delete', async () => {
         const ok = await confirmDialog({ title: 'Delete this update?', body: 'Your regulars will no longer see it.', confirmText: 'Delete', danger: true });
         if (!ok) return;
